@@ -14,13 +14,7 @@ This is a simple and lightweight wrapper for the steam web api. Created because 
 ### Installation
 
 ```
-npm install @razr9/steamwebapi
-```
-
-or
-
-```
-yarn add @razr9/steamwebapi
+npm install steamwebapi-ts
 ```
 
 ### Usage
@@ -64,3 +58,5 @@ More info: https://partner.steamgames.com/doc/webapi/
 ## License
 
 MIT
+
+originally forked from https://github.com/DevNvll/steamwebapi
