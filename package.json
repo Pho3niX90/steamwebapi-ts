@@ -4,11 +4,18 @@
   "description": "> A simplified wrapper for the steam web api",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Pho3niX90/steamwebapi.git"
+    "url": "git+https://github.com/Pho3niX90/steamwebapi-ts.git"
   },
   "main": "lib/index.js",
   "module": "lib/index.esm.js",
-  "keywords": [],
+  "keywords": [
+    "steam",
+    "web",
+    "api",
+    "node",
+    "typescript",
+    "library"
+  ],
   "license": "MIT",
   "allowSyntheticDefaultImports": true,
   "compilerOptions": {
@@ -42,9 +49,9 @@
   ],
   "types": "./lib\\index.d.ts",
   "bugs": {
-    "url": "https://github.com/Pho3niX90/steamwebapi/issues"
+    "url": "https://github.com/Pho3niX90/steamwebapi-ts/issues"
   },
-  "homepage": "https://github.com/Pho3niX90/steamwebapi#readme",
+  "homepage": "https://github.com/Pho3niX90/steamwebapi-ts#readme",
   "directories": {
     "lib": "lib",
     "test": "test"
