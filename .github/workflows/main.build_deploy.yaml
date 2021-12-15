@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GIT_TOKEN_AVB }}
 
       - name: Setup Node 16.x
         uses: actions/setup-node@v1
