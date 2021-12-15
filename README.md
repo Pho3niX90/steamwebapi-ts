@@ -58,3 +58,5 @@ More info: https://partner.steamgames.com/doc/webapi/
 ## License
 
 MIT
+
+originally forked from https://github.com/DevNvll/steamwebapi
