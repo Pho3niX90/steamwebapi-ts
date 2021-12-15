@@ -1,9 +1,9 @@
 
-Main: [![Coverage Badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Pho3niX90/66e2656c1157700d2adcc8a9adef6929/raw/steamwebapi__heads_master.json)]
+Main: [![Coverage Badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Pho3niX90/66e2656c1157700d2adcc8a9adef6929/raw/steamwebapi-ts__heads_master.json)]
 
-Develop: [![Coverage Badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Pho3niX90/66e2656c1157700d2adcc8a9adef6929/raw/steamwebapi__heads_develop.json)]
+Develop: [![Coverage Badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Pho3niX90/66e2656c1157700d2adcc8a9adef6929/raw/steamwebapi-ts__heads_develop.json)]
 
-# steamwebapi
+# steamwebapi-ts
 
 > A simplified wrapper for the steam web api
 
@@ -19,8 +19,8 @@ npm install steamwebapi-ts
 
 ### Usage
 
-```javascript
-const Steam = require('steamwebapi')
+```typescript
+import {Steam} from 'steamwebapi-ts';
 const api = new Steam(API_KEY_HERE)
 
 const id = 76561198052893297 || 'cmdline' // You can use steamID64 or the vanity url

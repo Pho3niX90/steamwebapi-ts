@@ -8,7 +8,14 @@
   },
   "main": "lib/index.js",
   "module": "lib/index.esm.js",
-  "keywords": [],
+  "keywords": [
+    "steam",
+    "web",
+    "api",
+    "node",
+    "typescript",
+    "library"
+  ],
   "license": "MIT",
   "allowSyntheticDefaultImports": true,
   "compilerOptions": {
