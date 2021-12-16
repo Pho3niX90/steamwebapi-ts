@@ -1,6 +1,7 @@
 import {Steam} from '../src';
 import dotenv from 'dotenv';
 import {SteamPlayerBans} from '../src/types/SteamPlayerBans';
+const SteamID = require('steamid');
 
 if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
@@ -9,8 +10,8 @@ if (process.env.NODE_ENV !== 'production') {
 const api = new Steam(process.env.STEAM_API_KEY);
 
 const testData = {
-    a: {vanityId: 'Pho3niX90', steamId: '76561198007433923', name: 'Pho3niX90'},
-    b: {vanityId: 'kingdomrust', steamId: '76561199044451528', name: 'KingdomRust.com'}
+    a: {vanityId: 'Pho3niX90', steamId: 'STEAM_0:1:23584097', steamId3: '[U:1:47168195]', steamId64: '76561198007433923', name: 'Pho3niX90'},
+    b: {vanityId: 'kingdomrust', steamId: 'STEAM_0:0:542092900', steamId3: '[U:1:1084185800]', steamId64: '76561199044451528', name: 'KingdomRust.com'}
 }
 
 const testAppId = 252490;
@@ -22,10 +23,15 @@ it('constructor test', async () => {
 })
 
 it('should resolve vanity', async () => {
-    const vanityResponse = await api.resolveId(testData.a.vanityId);
-    const steamResponse = await api.resolveId(testData.a.steamId);
-    expect(vanityResponse).toBe(testData.a.steamId)
-    expect(steamResponse).toBe(testData.a.steamId)
+    const vanityResponse = api.resolveId(testData.a.vanityId);
+    const steamIdResponse = api.resolveId(testData.a.steamId);
+    const steam3Response = api.resolveId(testData.a.steamId3);
+    const steam64Response = api.resolveId(testData.a.steamId64);
+
+    await expect(vanityResponse).resolves.toBe(testData.a.steamId64);
+    await expect(steam64Response).resolves.toBe(testData.a.steamId64);
+    await expect(steam3Response).resolves.toBe(testData.a.steamId64);
+    await expect(steamIdResponse).resolves.toBe(testData.a.steamId64);
 
     api.resolveId('').catch(err => expect(err.message).toBe('ID not provided.'))
     api.resolveId('null/*-/-*').catch(err => expect(err.message).toBe('ID not found.'))
@@ -63,12 +69,12 @@ it('getGlobalStatsForGame()', async () => {
 it('getPlayerSummary()', async () => {
     const response = await api.getPlayerSummary(testData.a.vanityId);
     expect(response).toBeDefined()
-    expect(response.steamid).toEqual(testData.a.steamId);
+    expect(response.steamid).toEqual(testData.a.steamId64);
     await api.getPlayerSummary('').catch(err => expect(err.message).toBe('ID not provided.'));
 })
 
 it('getPlayersSummary()', async () => {
-    const response = await api.getPlayersSummary([testData.a.steamId, testData.b.steamId]);
+    const response = await api.getPlayersSummary([testData.a.steamId64, testData.b.steamId64]);
     expect(response).toBeDefined();
     expect(response.length).toEqual(2);
 
@@ -79,10 +85,10 @@ it('getPlayersSummary()', async () => {
 
     const arr1 = response[0];
     const arr2 = response[1];
-    expect([testData.a.steamId, testData.b.steamId].includes(arr1.steamid)).toEqual(true);
+    expect([testData.a.steamId64, testData.b.steamId64].includes(arr1.steamid)).toEqual(true);
     expect([arr1.personaname, arr2.personaname].includes(testData.a.name)).toEqual(true);
 
-    expect([testData.a.steamId, testData.b.steamId].includes(arr2.steamid)).toEqual(true);
+    expect([testData.a.steamId64, testData.b.steamId64].includes(arr2.steamid)).toEqual(true);
     expect([arr1.personaname, arr2.personaname].includes(testData.b.name)).toEqual(true);
 })
 
@@ -108,7 +114,7 @@ it('getPlayerBans()', async () => {
     expect(response).toBeDefined()
     expect(Object.keys(response).length).toEqual(7);
     expect(response).toEqual(<SteamPlayerBans>{
-        SteamId: testData.a.steamId,
+        SteamId: testData.a.steamId64,
         CommunityBanned: false,
         VACBanned: false,
         NumberOfVACBans: 0,
@@ -222,3 +228,10 @@ it('getServerList()', async () => {
     await api.getServerList(`\\appid\\shouldNotExists`, serverLimit).catch(err => expect(err.message).toBe('Response from steam invalid.'));
 
 }, 30000);
+
+it('steamid library', async () => {
+    expect(new SteamID(testData.a.steamId).isValid()).toEqual(true);
+    expect(new SteamID(testData.a.steamId3).isValid()).toEqual(true);
+    expect(new SteamID(testData.a.steamId64).isValid()).toEqual(true);
+    expect(() => new SteamID(testData.a.vanityId)).toThrowError();
+})

@@ -7,6 +7,7 @@ import {SteamPlayedGame} from './types/SteamPlayedGame';
 import {SteamPlayerBans} from './types/SteamPlayerBans';
 import {SteamAchievement} from './types/SteamAchievement';
 import {SteamFriend} from './types/SteamFriend';
+import SteamID from 'steamid';
 
 const fetch = require('node-fetch');
 const appendQuery = require('append-query');
@@ -38,16 +39,26 @@ export class Steam {
             if (!vanity) {
                 return reject(new Error('ID not provided.'));
             }
-            if (('' + vanity).match(/^7656119[0-9]{10}$/i)) {
-                resolve(vanity);
+
+            if (vanity.match(/^7656119[0-9]{10}$/i)) {
+                return resolve(vanity);
+            }
+
+            let idObject: SteamID = null;
+
+            try {
+                idObject = new SteamID(vanity);
+            } catch (ignore){}
+
+            if (idObject && idObject.isValid()) {
+                return resolve(idObject.getSteamID64())
             } else {
-                const {response} = await this.request(
-                    'ISteamUser/ResolveVanityURL/v0001?vanityurl=' + vanity
-                )
+                const {response} = await this.request('ISteamUser/ResolveVanityURL/v0001?vanityurl=' + vanity);
+
                 if (!response || Object.keys(response).length === 0 || response.success === 42) {
                     return reject(new Error('ID not found.'));
                 }
-                resolve(response.steamid)
+                return resolve(response.steamid)
             }
         });
     }
