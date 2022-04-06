@@ -11,7 +11,7 @@ const api = new Steam(process.env.STEAM_API_KEY);
 
 const testData = {
     a: {vanityId: 'Pho3niX90', steamId: 'STEAM_0:1:23584097', steamId3: '[U:1:47168195]', steamId64: '76561198007433923', name: 'Pho3niX90'},
-    b: {vanityId: 'kingdomrust', steamId: 'STEAM_0:0:542092900', steamId3: '[U:1:1084185800]', steamId64: '76561199044451528', name: 'KingdomRust.com'}
+    b: {vanityId: 'serverarmour', steamId: 'STEAM_0:0:542092900', steamId3: '[U:1:1084185800]', steamId64: '76561199044451528', name: 'ServerArmour.com'}
 }
 
 const testAppId = 252490;

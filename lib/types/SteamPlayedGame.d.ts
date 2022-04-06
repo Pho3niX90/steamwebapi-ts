@@ -1,5 +1,4 @@
-import {SteamOwnedGame} from './SteamOwnedGame';
-
+import { SteamOwnedGame } from './SteamOwnedGame';
 export interface SteamPlayedGame extends SteamOwnedGame {
     name: string;
     playtime_2weeks: number;

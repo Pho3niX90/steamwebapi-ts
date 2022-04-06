@@ -7,7 +7,7 @@ import {SteamPlayedGame} from './types/SteamPlayedGame';
 import {SteamPlayerBans} from './types/SteamPlayerBans';
 import {SteamAchievement} from './types/SteamAchievement';
 import {SteamFriend} from './types/SteamFriend';
-import SteamID from 'steamid';
+// import SteamID from 'steamid';
 
 const fetch = require('node-fetch');
 const appendQuery = require('append-query');
@@ -44,22 +44,22 @@ export class Steam {
                 return resolve(vanity);
             }
 
-            let idObject: SteamID = null;
+            //let idObject: SteamID = null;
 
-            try {
+            /*try {
                 idObject = new SteamID(vanity);
-            } catch (ignore){}
-
+            } catch (ignore){}*/
+/*
             if (idObject && idObject.isValid()) {
                 return resolve(idObject.getSteamID64())
-            } else {
-                const {response} = await this.request('ISteamUser/ResolveVanityURL/v0001?vanityurl=' + vanity);
+            } else {*/
+                const {response} = await this.request('ISteamUser/ResolveVanityURL/v0001?vanityurl=' + vanity).catch(reject);
 
                 if (!response || Object.keys(response).length === 0 || response.success === 42) {
                     return reject(new Error('ID not found.'));
                 }
                 return resolve(response.steamid)
-            }
+           // }
         });
     }
 
@@ -70,7 +70,7 @@ export class Steam {
             }
             const {appnews} = await this.request(
                 `ISteamNews/GetNewsForApp/v0002?appid=${appid}&count=${count}&maxlength=${maxLength}&format=json`
-            )
+            ).catch(reject)
             if (!appnews) {
                 return reject(new Error('Game not found.'))
             }
@@ -85,7 +85,7 @@ export class Steam {
             }
             const {achievementpercentages} = await this.request(
                 `ISteamUserStats/GetGlobalAchievementPercentagesForApp/v0002?gameid=${appid}`
-            )
+            ).catch(reject)
             if (!achievementpercentages || Object.keys(achievementpercentages).length === 0) {
                 return reject(new Error('Game not found.'))
             }
@@ -119,7 +119,7 @@ export class Steam {
                 `ISteamUserStats/GetGlobalStatsForGame/v0001?appid=${appid}&count=${count}`,
                 achievementsList
             )
-            const {response} = await this.request(URLWithAchievements)
+            const {response} = await this.request(URLWithAchievements).catch(reject)
             if (!response || Object.keys(response).length === 0 || response.result == 20) {
                 return reject(new Error('Game not found.'));
             }
@@ -136,7 +136,7 @@ export class Steam {
             id = await this.resolveId(id).catch(reject) || '';
             const {response} = await this.request(
                 `ISteamUser/GetPlayerSummaries/v0002?steamids=${id}`
-            )
+            ).catch(reject)
             resolve(response?.players.shift());
         });
     }
@@ -152,7 +152,7 @@ export class Steam {
             }
             const {response} = await this.request(
                 `ISteamUser/GetPlayerSummaries/v0002?steamids=${ids.join(',')}`
-            )
+            ).catch(reject)
             resolve(response.players);
         })
     }
@@ -167,7 +167,7 @@ export class Steam {
                     }&include_appinfo=${include_appinfo ? 1 : 0}`,
                     {}
                 )
-            )
+            ).catch(reject)
             resolve(response.games);
         });
     }
@@ -177,7 +177,7 @@ export class Steam {
             id = await this.resolveId(id).catch(reject) || '';
             const {response} = await this.request(
                 `IPlayerService/GetRecentlyPlayedGames/v0001?steamid=${id}&format=json`
-            )
+            ).catch(reject)
             resolve(response.games);
         });
     }
@@ -187,7 +187,7 @@ export class Steam {
             id = await this.resolveId(id).catch(reject) || '';
             const {players} = await this.request(
                 `ISteamUser/GetPlayerBans/v1?steamids=${id}`
-            )
+            ).catch(reject)
             resolve(players.shift());
         });
     }
@@ -200,7 +200,7 @@ export class Steam {
             }
             const {playerstats} = await this.request(
                 `ISteamUserStats/GetPlayerAchievements/v0001?steamid=${id}&appid=${appid}`
-            )
+            ).catch(reject)
             if (onlyAchieved) {
                 resolve(playerstats.achievements.filter(
                     achievement => achievement.achieved === 1
@@ -233,7 +233,7 @@ export class Steam {
             id = await this.resolveId(id).catch(reject) || '';
             const response = await this.request(
                 `ISteamUser/GetFriendList/v0001?steamid=${id}&relationship=friend`
-            )
+            ).catch(reject)
             console.log(response)
             if (!response.friendslist) return reject(new Error('Profile not found or private'));
             console.log(JSON.stringify(response.friendslist.friends))
@@ -250,7 +250,7 @@ export class Steam {
             id = await this.resolveId(id).catch(reject) || '';
             const {response} = await this.request(
                 `IPlayerService/GetSteamLevel/v1?steamid=${id}`
-            )
+            ).catch(reject)
 
             if (!response || Object.keys(response).length === 0)
                 resolve(-1);
@@ -272,7 +272,7 @@ export class Steam {
             }
             const {response} = await this.request(
                 `IPlayerService/IsPlayingSharedGame/v0001?steamid=${id}&appid_playing=${appid}`
-            )
+            ).catch(reject)
             if (!response.success)
                 return reject(new Error('Profile not found or private'))
             resolve(response.lender_steamid)
@@ -286,7 +286,7 @@ export class Steam {
             }
             const {game} = await this.request(
                 `ISteamUserStats/GetSchemaForGame/v2?appid=${appid}`
-            )
+            ).catch(reject)
             return resolve(game);
         })
     }
@@ -303,7 +303,7 @@ export class Steam {
             }
             const app = await fetch(
                 'http://store.steampowered.com/api/appdetails?appids=' + appid
-            ).then(res => res.json())
+            ).then(res => res.json()).catch(reject)
             if (!app[appid].success) {
                 return reject(new Error('App not found.'))
             }
@@ -316,7 +316,7 @@ export class Steam {
             id = await this.resolveId(id).catch(reject) || '';
             const {response} = await this.request(
                 `IPlayerService/GetBadges/v1?steamid=${id}`
-            );
+            ).catch(reject);
 
             if (!response || Object.keys(response).length == 0) {
                 return reject(new Error('Profile not found or private'));
@@ -333,7 +333,7 @@ export class Steam {
 
             const {response} = await this.request(
                 `ISteamUserStats/GetNumberOfCurrentPlayers/v1?appid=${appid}`
-            )
+            ).catch(reject)
             resolve(<SteamAppIdPlayers>response);
         })
     }
@@ -354,7 +354,7 @@ export class Steam {
                 url = appendQuery(url, {limit: limit});
             }
 
-            const {response} = await this.request(url);
+            const {response} = await this.request(url).catch(reject);
             if (!response || Object.keys(response).length === 0 || !response.servers) {
                 return reject(new Error('Response from steam invalid.'));
             }
