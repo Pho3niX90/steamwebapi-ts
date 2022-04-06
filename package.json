@@ -1,6 +1,6 @@
 {
   "name": "steamwebapi-ts",
-  "version": "1.4.1",
+  "version": "1.4.3",
   "description": "> A simplified wrapper for the steam web api",
   "repository": {
     "type": "git",
@@ -28,9 +28,11 @@
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.16.0",
+    "@types/steamid": "^2.0.1",
     "append-query": "^2.1.1",
     "dotenv": "^10.0.0",
-    "node-fetch": "^2.6.6"
+    "node-fetch": "^2.6.6",
+    "steamid": "^2.0.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.16.4",

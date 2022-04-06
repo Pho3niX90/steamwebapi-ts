@@ -110,11 +110,15 @@ export class Steam {
      * @param id
      */
     async getPlayerSummary(id: string): Promise<SteamPlayerSummary> {
-        id = await this.resolveId(id);
-        const {response} = await this.request(
-            `ISteamUser/GetPlayerSummaries/v0002?steamids=${id}`
-        )
-        return response?.players.shift();
+        return new Promise(async (resolve, reject) => {
+            id = await this.resolveId(id);
+            const {response} = await this.request(
+                `ISteamUser/GetPlayerSummaries/v0002?steamids=${id}`
+            )
+            if(!response || !response.players || response.players.length === 0)
+                return reject(new Error('STEAM_ERROR'))
+            return resolve(response?.players?.shift());
+        })
     }
 
     /***
@@ -155,11 +159,15 @@ export class Steam {
     }
 
     async getPlayerBans(id: string): Promise<SteamPlayerBans> {
-        id = await this.resolveId(id);
-        const {players} = await this.request(
-            `ISteamUser/GetPlayerBans/v1?steamids=${id}`
-        )
-        return players.shift();
+        return new Promise(async (resolve, reject) => {
+            id = await this.resolveId(id);
+            const {players} = await this.request(
+                `ISteamUser/GetPlayerBans/v1?steamids=${id}`
+            )
+            if (!players || Object.keys(players).length === 0)
+                return reject(new Error('STEAM_ERROR'));
+            return resolve(players.shift());
+        })
     }
 
     async getPlayerAchievements(id: string, appid: number, onlyAchieved = false) {
