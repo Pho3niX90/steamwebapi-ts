@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.16.0",
+    "@types/steamid": "^2.0.1",
     "append-query": "^2.1.1",
     "dotenv": "^10.0.0",
     "node-fetch": "^2.6.6",

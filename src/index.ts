@@ -8,6 +8,9 @@ import {SteamPlayerBans} from './types/SteamPlayerBans';
 import {SteamAchievement} from './types/SteamAchievement';
 import {SteamFriend} from './types/SteamFriend';
 import SteamID from 'steamid';
+const SteamIDLib = require('steamid');
+
+//import SteamID from 'steamid';
 
 const fetch = require('node-fetch');
 const appendQuery = require('append-query');
@@ -44,10 +47,10 @@ export class Steam {
                 return resolve(vanity);
             }
 
-            let idObject: SteamID = null;
+            let idObject: SteamID | null = null;
 
             try {
-                idObject = new SteamID(vanity);
+                idObject = new SteamIDLib(vanity);
             } catch (ignore){}
 
             if (idObject && idObject.isValid()) {
