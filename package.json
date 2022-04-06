@@ -1,6 +1,6 @@
 {
   "name": "steamwebapi-ts",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "description": "> A simplified wrapper for the steam web api",
   "repository": {
     "type": "git",
