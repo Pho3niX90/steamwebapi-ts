@@ -8,6 +8,7 @@ import {SteamPlayerBans} from './types/SteamPlayerBans';
 import {SteamAchievement} from './types/SteamAchievement';
 import {SteamFriend} from './types/SteamFriend';
 import SteamID from 'steamid';
+
 const SteamIDLib = require('steamid');
 
 //import SteamID from 'steamid';
@@ -29,8 +30,11 @@ export class Steam {
     }
 
     request(endpoint): Promise<any> {
-        //const requestUrl = appendQuery(API_URL + endpoint, {key: token})
-        return fetch(appendQuery(API_URL + endpoint, {key: this.token})).then(res => res.json())
+        return new Promise((resolve, reject) => {
+            fetch(appendQuery(API_URL + endpoint, {key: this.token}))
+                .then(res => resolve(res.json()))
+                .catch(err => reject(err))
+        })
     }
 
     /***
@@ -51,7 +55,8 @@ export class Steam {
 
             try {
                 idObject = new SteamIDLib(vanity);
-            } catch (ignore){}
+            } catch (ignore) {
+            }
 
             if (idObject && idObject.isValid()) {
                 return resolve(idObject.getSteamID64())
@@ -134,13 +139,20 @@ export class Steam {
      * Accepts both vanity id and steam64Ids
      * @param id
      */
-    async getPlayerSummary(id: string): Promise<SteamPlayerSummary> {
+    async getPlayerSummary(id: string): Promise<SteamPlayerSummary | null> {
         return new Promise(async (resolve, reject) => {
             id = await this.resolveId(id).catch(reject) || '';
+
             const {response} = await this.request(
                 `ISteamUser/GetPlayerSummaries/v0002?steamids=${id}`
-            ).catch(reject)
-            resolve(response?.players.shift());
+            ).catch(reject);
+
+            if (response?.players && response?.players?.length > 0)
+                resolve(response?.players.shift())
+            else {
+                console.log(response)
+                reject(new Error('STEAM_ERROR'));
+            }
         });
     }
 

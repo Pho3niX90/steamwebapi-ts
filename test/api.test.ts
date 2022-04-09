@@ -68,7 +68,8 @@ it('getGlobalStatsForGame()', async () => {
 
 it('getPlayerSummary()', async () => {
     const response = await api.getPlayerSummary(testData.a.vanityId);
-    expect(response).toBeDefined()
+    expect(response).toBeDefined();
+    // @ts-ignore
     expect(response.steamid).toEqual(testData.a.steamId64);
     await api.getPlayerSummary('').catch(err => expect(err.message).toBe('ID not provided.'));
 })

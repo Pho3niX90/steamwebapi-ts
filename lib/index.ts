@@ -200,7 +200,7 @@ export class Steam {
                 .then(response => {
                     resolve(response.playerstats.stats)
                 })
-                .catch(err => {
+                .catch(_ignore => {
                     reject(new Error('Profile not found or private'))
                 })
         })
