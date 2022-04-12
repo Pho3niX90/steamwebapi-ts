@@ -249,9 +249,7 @@ export class Steam {
             const response = await this.request(
                 `ISteamUser/GetFriendList/v0001?steamid=${id}&relationship=friend`
             ).catch(reject)
-            console.log(response)
             if (!response.friendslist) return reject(new Error('Profile not found or private'));
-            console.log(JSON.stringify(response.friendslist.friends))
             resolve(response.friendslist.friends);
         });
     }
