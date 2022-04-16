@@ -306,7 +306,7 @@ export class Steam {
                 `IPlayerService/GetSteamLevel/v1?steamid=${id}`
             ).catch(reject)
 
-            if (request instanceof Error || !request || Object.keys(request.response).length === 0)
+            if (request instanceof Error || !request || !request?.response || Object.keys(request.response).length === 0)
                 resolve(-1);
 
             resolve(request.response.player_level);
