@@ -89,7 +89,7 @@ export class Steam {
             } else {
                 const request = await this.request('ISteamUser/ResolveVanityURL/v0001?vanityurl=' + vanity).catch(reject);
 
-                if (!request || !request.response || Object.keys(request.response).length === 0 || request.response.success === 42) {
+                if (request instanceof Error || !request || !request.response || Object.keys(request.response).length === 0 || request.response.success === 42) {
                     return reject(new Error('ID not found.'));
                 }
                 return resolve(request.response.steamid)
@@ -154,7 +154,7 @@ export class Steam {
                 achievementsList
             )
             const r = await this.request(URLWithAchievements).catch(reject)
-            if (!r || !r.response || Object.keys(r.response).length === 0 || r.response.result == 20) {
+            if (r instanceof Error || !r || !r.response || Object.keys(r.response).length === 0 || r.response.result == 20) {
                 return reject(new Error('Game not found.'));
             }
             resolve(r.response.globalstats);
@@ -173,7 +173,11 @@ export class Steam {
                 `ISteamUser/GetPlayerSummaries/v0002?steamids=${id}`
             ).catch(reject);
 
-            if (request && request?.response?.players && request?.response?.players?.length > 0)
+            if (request instanceof Error || !request || !request?.response?.players?.length) {
+                return reject(new Error('STEAM_ERROR'))
+            }
+
+            if (request?.response?.players && request?.response?.players?.length > 0)
                 resolve(request.response?.players.shift())
             else {
                 reject(new Error('STEAM_ERROR'));
@@ -283,7 +287,6 @@ export class Steam {
             const request = await this.request(
                 `ISteamUser/GetFriendList/v0001?steamid=${id}&relationship=friend`
             ).catch(reject)
-            console.log(request);
             if (request instanceof Error || !request?.friendslist) return reject(new Error('Profile not found or private'));
             resolve(request.friendslist.friends);
         });
@@ -321,7 +324,7 @@ export class Steam {
             const request = await this.request(
                 `IPlayerService/IsPlayingSharedGame/v0001?steamid=${id}&appid_playing=${appid}`
             ).catch(reject)
-            if (request instanceof Error || !request || !request.response.success)
+            if (request instanceof Error || !request || !request?.response?.success)
                 return reject(new Error('Profile not found or private'))
             resolve(request.response.lender_steamid)
         })
