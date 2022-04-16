@@ -84,7 +84,6 @@ jobs:
           major-wording: 'MAJOR'
           patch-wording: 'patch,fixes,fix,fixed'
           rc-wording: 'RELEASE,alpha'
-          default: prerelease
           skip-tag: 'true'
 
       - name: Build Project
