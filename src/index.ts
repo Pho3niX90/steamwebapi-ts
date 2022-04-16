@@ -36,8 +36,9 @@ export class Steam {
     request(endpoint): Promise<any> {
         if (isRateLimited) {
             let timeSince = dayjs().diff(rateLimitedTimestamp, 'minute');
-            if (timeSince < 5) {
-                return Promise.reject(new Error(`Rate limited. Retring in ${5 - timeSince} mins`));
+            if (timeSince < 60) {
+                console.log(`Steam rate limited. Won't send request. Retrying in ${60 - timeSince} mins`)
+                return Promise.reject(new Error(`Rate limited. Retrying in ${60 - timeSince} mins`));
             }
         }
         return new Promise((resolve, reject) => {
@@ -52,7 +53,7 @@ export class Steam {
                         case 429:
                             isRateLimited = true;
                             rateLimitedTimestamp = new Date();
-                            reject(new Error(`Too many requests. Retrying in 5mins`))
+                            reject(new Error(`Too many requests. Retrying in 60mins`))
                             break;
                         default:
                             return reject(new Error(`Steam returned ${statusCode} response code`))
