@@ -42,7 +42,7 @@ it('getNewsForApp()', async () => {
     expect(response).toBeDefined()
 
     api.getNewsForApp(0).catch(err => expect(err.message).toBe('AppID not provided.'));
-    api.getNewsForApp(74545454687846).catch(err => expect(err.message).toBe('Game not found.'))
+    api.getNewsForApp(74545454687846).catch(err => expect(err.message).toBe('Game news not found.'))
 })
 
 it('getGlobalAchievementPercentagesForApp()', async () => {
