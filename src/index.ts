@@ -173,7 +173,7 @@ export class Steam {
                 `ISteamUser/GetPlayerSummaries/v0002?steamids=${id}`
             ).catch(reject);
 
-            if (request && request.response?.players && request.response?.players?.length > 0)
+            if (request && request?.response?.players && request?.response?.players?.length > 0)
                 resolve(request.response?.players.shift())
             else {
                 reject(new Error('STEAM_ERROR'));
@@ -255,7 +255,6 @@ export class Steam {
                     achievement => achievement.achieved === 1
                 ))
             }
-            console.log(request)
             if (!request || !request?.playerstats?.success)
                 return reject(new Error('Profile not found or private'));
             resolve(request.playerstats.achievements);
@@ -281,11 +280,11 @@ export class Steam {
     async getFriendList(id: string): Promise<SteamFriend[]> {
         return new Promise(async (resolve, reject) => {
             id = await this.resolveId(id).catch(reject) || '';
-            const response = await this.request(
+            const request = await this.request(
                 `ISteamUser/GetFriendList/v0001?steamid=${id}&relationship=friend`
             ).catch(reject)
-            if (!response.friendslist) return reject(new Error('Profile not found or private'));
-            resolve(response.friendslist.friends);
+            if (request instanceof Error || request.friendslist) return reject(new Error('Profile not found or private'));
+            resolve(request.friendslist.friends);
         });
     }
 
