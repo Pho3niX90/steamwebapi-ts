@@ -241,8 +241,8 @@ export class Steam {
             const request = await this.request(
                 `ISteamUser/GetPlayerBans/v1?steamids=${id}`
             ).catch(reject)
-            if(request instanceof Error || !request.players) {
-                return reject(new Error('STEAM_ERROR'))
+            if(request instanceof Error || !request || !request?.players) {
+                return reject(new Error('STEAM_ERROR'));
             }
             resolve(request.players.shift());
         });
