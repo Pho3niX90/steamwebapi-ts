@@ -238,10 +238,13 @@ export class Steam {
     async getPlayerBans(id: string): Promise<SteamPlayerBans> {
         return new Promise(async (resolve, reject) => {
             id = await this.resolveId(id).catch(reject) || '';
-            const {players} = await this.request(
+            const request = await this.request(
                 `ISteamUser/GetPlayerBans/v1?steamids=${id}`
             ).catch(reject)
-            resolve(players.shift());
+            if(request instanceof Error || !request.players) {
+                return reject(new Error('STEAM_ERROR'))
+            }
+            resolve(request.players.shift());
         });
     }
 
