@@ -8,6 +8,7 @@ import {SteamPlayerBans} from './types/SteamPlayerBans';
 import {SteamAchievement} from './types/SteamAchievement';
 import {SteamFriend} from './types/SteamFriend';
 import SteamID from 'steamid';
+import dayjs from 'dayjs';
 
 const SteamIDLib = require('steamid');
 
@@ -17,6 +18,9 @@ const fetch = require('node-fetch');
 const appendQuery = require('append-query');
 
 const API_URL = 'http://api.steampowered.com/';
+
+let isRateLimited = false;
+let rateLimitedTimestamp = new Date();
 
 export class Steam {
     token;
@@ -30,9 +34,30 @@ export class Steam {
     }
 
     request(endpoint): Promise<any> {
+        if (isRateLimited) {
+            let timeSince = dayjs().diff(rateLimitedTimestamp, 'minute');
+            if (timeSince < 5) {
+                return Promise.reject(new Error(`Rate limited. Retring in ${5 - timeSince} mins`));
+            }
+        }
         return new Promise((resolve, reject) => {
             fetch(appendQuery(API_URL + endpoint, {key: this.token}))
-                .then(res => resolve(res.json()))
+                .then(res => {
+                    const statusCode = res.status;
+                    switch (statusCode) {
+                        case 200:
+                            isRateLimited = false;
+                            resolve(res.json());
+                            break;
+                        case 429:
+                            isRateLimited = true;
+                            rateLimitedTimestamp = new Date();
+                            reject(new Error(`Too many requests. Retrying in 5mins`))
+                            break;
+                        default:
+                            return reject(new Error(`Steam returned ${statusCode} response code`))
+                    }
+                })
                 .catch(err => reject(err))
         })
     }
@@ -61,12 +86,12 @@ export class Steam {
             if (idObject && idObject.isValid()) {
                 return resolve(idObject.getSteamID64())
             } else {
-                const {response} = await this.request('ISteamUser/ResolveVanityURL/v0001?vanityurl=' + vanity).catch(reject);
+                const request = await this.request('ISteamUser/ResolveVanityURL/v0001?vanityurl=' + vanity).catch(reject);
 
-                if (!response || Object.keys(response).length === 0 || response.success === 42) {
+                if (!request || !request.response || Object.keys(request.response).length === 0 || request.response.success === 42) {
                     return reject(new Error('ID not found.'));
                 }
-                return resolve(response.steamid)
+                return resolve(request.response.steamid)
             }
         });
     }
@@ -76,13 +101,13 @@ export class Steam {
             if (!appid) {
                 return reject(new Error('AppID not provided.'));
             }
-            const {appnews} = await this.request(
+            const request = await this.request(
                 `ISteamNews/GetNewsForApp/v0002?appid=${appid}&count=${count}&maxlength=${maxLength}&format=json`
-            ).catch(reject)
-            if (!appnews) {
-                return reject(new Error('Game not found.'))
+            ).catch(_err => new Error('Game news not found.'))
+            if (request instanceof Error || !request?.appnews) {
+                return reject(new Error('Game news not found.'))
             }
-            resolve(appnews.newsitems)
+            resolve(request.appnews.newsitems)
         })
     }
 
@@ -91,13 +116,13 @@ export class Steam {
             if (!appid) {
                 return reject(new Error('AppID not provided.'))
             }
-            const {achievementpercentages} = await this.request(
+            const request = await this.request(
                 `ISteamUserStats/GetGlobalAchievementPercentagesForApp/v0002?gameid=${appid}`
-            ).catch(reject)
-            if (!achievementpercentages || Object.keys(achievementpercentages).length === 0) {
+            ).catch(_err => new Error('Game not found.'))
+            if (request instanceof Error || !request || !request.achievementpercentages || Object.keys(request.achievementpercentages).length === 0) {
                 return reject(new Error('Game not found.'))
             }
-            resolve(achievementpercentages.achievements)
+            resolve(request.achievementpercentages.achievements)
         });
     }
 
@@ -110,7 +135,7 @@ export class Steam {
                 return reject(new Error('Count must be larger than 1'));
             }
 
-            if (!achievements || achievements.length === 0) {
+            if (achievements instanceof Error || !achievements || achievements.length === 0) {
                 return reject(new Error('You must provide an array of achievement names.'));
             }
 
@@ -127,11 +152,11 @@ export class Steam {
                 `ISteamUserStats/GetGlobalStatsForGame/v0001?appid=${appid}&count=${count}`,
                 achievementsList
             )
-            const {response} = await this.request(URLWithAchievements).catch(reject)
-            if (!response || Object.keys(response).length === 0 || response.result == 20) {
+            const r = await this.request(URLWithAchievements).catch(reject)
+            if (!r || !r.response || Object.keys(r.response).length === 0 || r.response.result == 20) {
                 return reject(new Error('Game not found.'));
             }
-            resolve(response.globalstats);
+            resolve(r.response.globalstats);
         });
     }
 
@@ -143,14 +168,13 @@ export class Steam {
         return new Promise(async (resolve, reject) => {
             id = await this.resolveId(id).catch(reject) || '';
 
-            const {response} = await this.request(
+            const request = await this.request(
                 `ISteamUser/GetPlayerSummaries/v0002?steamids=${id}`
             ).catch(reject);
 
-            if (response?.players && response?.players?.length > 0)
-                resolve(response?.players.shift())
+            if (request && request.response?.players && request.response?.players?.length > 0)
+                resolve(request.response?.players.shift())
             else {
-                console.log(response)
                 reject(new Error('STEAM_ERROR'));
             }
         });
@@ -165,17 +189,20 @@ export class Steam {
             if (!ids || ids.length < 1) {
                 return reject(new Error('IDs not provided.'));
             }
-            const {response} = await this.request(
+            const request = await this.request(
                 `ISteamUser/GetPlayerSummaries/v0002?steamids=${ids.join(',')}`
             ).catch(reject)
-            resolve(response.players);
+            if (request instanceof Error || !request) {
+                return reject(new Error('STEAM_ERROR'))
+            }
+            resolve(request.response.players);
         })
     }
 
     async getOwnedGames(id: string, include_free_games = false, include_appinfo = false): Promise<SteamOwnedGame[]> {
         return new Promise(async (resolve, reject) => {
             id = await this.resolveId(id).catch(reject) || '';
-            const {response} = await this.request(
+            const request = await this.request(
                 appendQuery(
                     `IPlayerService/GetOwnedGames/v1?steamid=${id}&format=json&include_played_free_games=${
                         include_free_games ? 1 : 0
@@ -183,17 +210,23 @@ export class Steam {
                     {}
                 )
             ).catch(reject)
-            resolve(response.games);
+            if (request instanceof Error || !request) {
+                return reject(new Error('STEAM_ERROR'))
+            }
+            resolve(request.response.games);
         });
     }
 
     async getRecentlyPlayedGames(id: string): Promise<SteamPlayedGame[]> {
         return new Promise(async (resolve, reject) => {
             id = await this.resolveId(id).catch(reject) || '';
-            const {response} = await this.request(
+            const request = await this.request(
                 `IPlayerService/GetRecentlyPlayedGames/v0001?steamid=${id}&format=json`
-            ).catch(reject)
-            resolve(response.games);
+            ).catch(reject);
+            if (request instanceof Error || !request) {
+                return reject(new Error('STEAM_ERROR'))
+            }
+            resolve(request.response.games);
         });
     }
 
@@ -213,17 +246,18 @@ export class Steam {
             if (!appid) {
                 return reject(new Error('AppID not provided.'));
             }
-            const {playerstats} = await this.request(
+            const request = await this.request(
                 `ISteamUserStats/GetPlayerAchievements/v0001?steamid=${id}&appid=${appid}`
-            ).catch(reject)
+            ).catch(_err => new Error('Profile not found or private'))
             if (onlyAchieved) {
-                resolve(playerstats.achievements.filter(
+                resolve(request.playerstats.achievements.filter(
                     achievement => achievement.achieved === 1
                 ))
             }
-            if (!playerstats.success)
+            console.log(request)
+            if (!request || !request?.playerstats?.success)
                 return reject(new Error('Profile not found or private'));
-            resolve(playerstats.achievements);
+            resolve(request.playerstats.achievements);
         })
     }
 
@@ -261,14 +295,14 @@ export class Steam {
     async getUserLevel(id: string): Promise<number> {
         return new Promise(async (resolve, reject) => {
             id = await this.resolveId(id).catch(reject) || '';
-            const {response} = await this.request(
+            const request = await this.request(
                 `IPlayerService/GetSteamLevel/v1?steamid=${id}`
             ).catch(reject)
 
-            if (!response || Object.keys(response).length === 0)
+            if (request instanceof Error || !request || Object.keys(request.response).length === 0)
                 resolve(-1);
 
-            resolve(response.player_level);
+            resolve(request.response.player_level);
         });
     }
 
@@ -283,12 +317,12 @@ export class Steam {
             if (!appid) {
                 return reject(new Error('AppID not provided.'));
             }
-            const {response} = await this.request(
+            const request = await this.request(
                 `IPlayerService/IsPlayingSharedGame/v0001?steamid=${id}&appid_playing=${appid}`
             ).catch(reject)
-            if (!response.success)
+            if (request instanceof Error || !request || !request.response.success)
                 return reject(new Error('Profile not found or private'))
-            resolve(response.lender_steamid)
+            resolve(request.response.lender_steamid)
         })
     }
 
@@ -327,14 +361,14 @@ export class Steam {
     async getUserBadges(id: string): Promise<SteamUserBadge[]> {
         return new Promise(async (resolve, reject) => {
             id = await this.resolveId(id).catch(reject) || '';
-            const {response} = await this.request(
+            const request = await this.request(
                 `IPlayerService/GetBadges/v1?steamid=${id}`
             ).catch(reject);
 
-            if (!response || Object.keys(response).length == 0) {
+            if (request instanceof Error || !request || Object.keys(request.response).length == 0) {
                 return reject(new Error('Profile not found or private'));
             }
-            resolve(response.badges);
+            resolve(request.response.badges);
         });
     }
 
@@ -344,10 +378,15 @@ export class Steam {
                 reject(new Error('AppID not provided.'))
             }
 
-            const {response} = await this.request(
+            const request = await this.request(
                 `ISteamUserStats/GetNumberOfCurrentPlayers/v1?appid=${appid}`
             ).catch(reject)
-            resolve(<SteamAppIdPlayers>response);
+
+            if (request instanceof Error || !request) {
+                return reject(new Error('STEAM_ERROR'))
+            }
+
+            resolve(<SteamAppIdPlayers>request.response);
         })
     }
 
@@ -367,12 +406,12 @@ export class Steam {
                 url = appendQuery(url, {limit: limit});
             }
 
-            const {response} = await this.request(url).catch(reject);
-            if (!response || Object.keys(response).length === 0 || !response.servers) {
+            const request = await this.request(url).catch(reject);
+            if (request instanceof Error || !request || Object.keys(request.response).length === 0 || !request.response.servers) {
                 return reject(new Error('Response from steam invalid.'));
             }
 
-            resolve(response.servers as SteamServer[]);
+            resolve(request.response.servers as SteamServer[]);
         });
     }
 }
