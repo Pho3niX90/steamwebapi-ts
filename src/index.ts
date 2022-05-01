@@ -307,7 +307,7 @@ export class Steam {
             ).catch(reject)
 
             if (request instanceof Error || !request || !request?.response || Object.keys(request.response).length === 0)
-                resolve(-1);
+                return resolve(-1);
 
             resolve(request.response.player_level);
         });
