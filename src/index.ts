@@ -16,7 +16,6 @@ const SteamIDLib = require('steamid');
 
 const fetch = require('node-fetch');
 const appendQuery = require('append-query');
-
 const API_URL = 'http://api.steampowered.com/';
 
 let isRateLimited = false;
@@ -33,12 +32,17 @@ export class Steam {
         }
     }
 
+    get isRateLimited() {
+        let timeSince = dayjs().diff(rateLimitedTimestamp, 'minute');
+        return {limited: isRateLimited, timeSince, minsLeft: 60 - timeSince};
+    }
+
     request(endpoint): Promise<any> {
-        if (isRateLimited) {
-            let timeSince = dayjs().diff(rateLimitedTimestamp, 'minute');
-            if (timeSince < 60) {
-                console.log(`Steam rate limited. Won't send request. Retrying in ${60 - timeSince} mins`)
-                return Promise.reject(new Error(`Rate limited. Retrying in ${60 - timeSince} mins`));
+        const limited = this.isRateLimited;
+        if (limited.limited) {
+            if (limited.timeSince < 60) {
+                console.log(`Steam rate limited. Won't send request. Retrying in ${limited.minsLeft} mins`)
+                return Promise.reject(new Error(`Rate limited. Retrying in ${limited.minsLeft} mins`));
             }
         }
         return new Promise((resolve, reject) => {
