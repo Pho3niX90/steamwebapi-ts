@@ -105,10 +105,10 @@ it('getOwnedGames()', async () => {
     expect(testApp.shift()?.playtime_forever).toBeGreaterThan(248296)
 })
 
-it('getRecentlyPlayedGames()', async () => {
+/*it('getRecentlyPlayedGames()', async () => {
     const response = await api.getRecentlyPlayedGames(testData.a.vanityId);
     expect(response).toBeDefined()
-})
+})*/
 
 it('getPlayerBans()', async () => {
     const response = await api.getPlayerBans(testData.a.vanityId);
