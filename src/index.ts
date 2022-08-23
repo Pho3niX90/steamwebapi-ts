@@ -56,7 +56,10 @@ export class Steam {
             }
         }
 
-        if ((new Date().getTime() + (24 * 60 * 60 * 1000)) > requestCountLastReset.getTime()) {
+        /**
+         * Reset counter every 24hrs
+         */
+        if (new Date().getTime() > (requestCountLastReset.getTime() + (24 * 60 * 60 * 1000))) {
             requestCount = 0;
             requestCountLastReset = new Date();
         }
