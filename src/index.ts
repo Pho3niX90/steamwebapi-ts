@@ -35,9 +35,9 @@ export class Steam {
         }
     }
 
-    get isRateLimited() {
-        let timeSince = dayjs().diff(rateLimitedTimestamp, 'minute');
-        return {limited: isRateLimited, timeSince, minsLeft: 60 - timeSince};
+    get isRateLimited(): {limited: boolean, minsSince: number, minsLeft: number} {
+        let minsSince = dayjs().diff(rateLimitedTimestamp, 'minute');
+        return {limited: isRateLimited, minsSince, minsLeft: 60 - minsSince};
     }
 
     /***
@@ -50,7 +50,7 @@ export class Steam {
     request(endpoint): Promise<any> {
         const limited = this.isRateLimited;
         if (limited.limited) {
-            if (limited.timeSince < 60) {
+            if (limited.minsSince < 60) {
                 console.log(`Steam rate limited. Won't send request. Retrying in ${limited.minsLeft} mins. Requests since ${requestCountLastReset.toTimeString()} is ${requestCount}`)
                 return Promise.reject(new Error(`Rate limited. Retrying in ${limited.minsLeft} mins`));
             }

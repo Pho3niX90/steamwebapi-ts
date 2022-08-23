@@ -31,6 +31,8 @@ api.getPlayerSummary(id).then(data => {
 ### Methods
 
 ```javascript
+isRateLimited // returns obj indicating if you are rate limited
+requestCount // returns obj with total requests to steam and lastReset of the counter
 resolveId(id) // resolves vanity url to steamID64
 getNewsForApp(appid[,count = 3, maxLength = 300])
 getGlobalAchievementPercentagesForApp(appid)
