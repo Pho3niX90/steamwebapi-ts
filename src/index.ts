@@ -21,6 +21,9 @@ const API_URL = 'http://api.steampowered.com/';
 let isRateLimited = false;
 let rateLimitedTimestamp = new Date();
 
+let requestCount = 0;
+let requestCountLastReset = new Date();
+
 export class Steam {
     token;
 
@@ -37,14 +40,28 @@ export class Steam {
         return {limited: isRateLimited, timeSince, minsLeft: 60 - timeSince};
     }
 
+    /***
+     * Resets every 24hrs
+     */
+    get requestCount() {
+        return {count: requestCount, lastReset: requestCountLastReset}
+    }
+
     request(endpoint): Promise<any> {
         const limited = this.isRateLimited;
         if (limited.limited) {
             if (limited.timeSince < 60) {
-                console.log(`Steam rate limited. Won't send request. Retrying in ${limited.minsLeft} mins`)
+                console.log(`Steam rate limited. Won't send request. Retrying in ${limited.minsLeft} mins. Requests since ${requestCountLastReset.toTimeString()} is ${requestCount}`)
                 return Promise.reject(new Error(`Rate limited. Retrying in ${limited.minsLeft} mins`));
             }
         }
+
+        if ((new Date().getTime() + (24 * 60 * 60 * 1000)) > requestCountLastReset.getMilliseconds()) {
+            requestCount = 0;
+        }
+
+        requestCount++;
+
         return new Promise((resolve, reject) => {
             fetch(appendQuery(API_URL + endpoint, {key: this.token}))
                 .then(res => {
@@ -245,7 +262,7 @@ export class Steam {
             const request = await this.request(
                 `ISteamUser/GetPlayerBans/v1?steamids=${id}`
             ).catch(reject)
-            if(request instanceof Error || !request || !request?.players) {
+            if (request instanceof Error || !request || !request?.players) {
                 return reject(new Error('STEAM_ERROR'));
             }
             resolve(request.players.shift());
