@@ -44,7 +44,7 @@ export class Steam {
      * Resets every 24hrs
      */
     get requestCount() {
-        return {count: requestCount, lastReset: requestCountLastReset}
+        return {count: requestCount, lastReset: requestCountLastReset.getTime()}
     }
 
     request(endpoint): Promise<any> {
@@ -56,7 +56,7 @@ export class Steam {
             }
         }
 
-        if ((new Date().getTime() + (24 * 60 * 60 * 1000)) > requestCountLastReset.getMilliseconds()) {
+        if ((new Date().getTime() + (24 * 60 * 60 * 1000)) > requestCountLastReset.getTime()) {
             requestCount = 0;
             requestCountLastReset = new Date();
         }
