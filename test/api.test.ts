@@ -222,7 +222,7 @@ it('getServerList()', async () => {
 
     for (let i = 0; i < randomChecks; i++) {
         const rndInt = Math.floor(Math.random() * serverLimit) + 1
-        expect(response[rndInt].appid).toBe(testAppId);
+        expect(response[Math.min(rndInt, response.length - 1)].appid).toBe(testAppId);
     }
 
     await api.getServerList(``, serverLimit).catch(err => expect(err.message).toBe('Filter not provided.'));
