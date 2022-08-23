@@ -58,6 +58,7 @@ export class Steam {
 
         if ((new Date().getTime() + (24 * 60 * 60 * 1000)) > requestCountLastReset.getMilliseconds()) {
             requestCount = 0;
+            requestCountLastReset = new Date();
         }
 
         requestCount++;
