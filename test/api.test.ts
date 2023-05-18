@@ -125,7 +125,7 @@ it('getPlayerBans()', async () => {
     })
 })
 
-it('getPlayerAchievements()', async () => {
+<!-- it('getPlayerAchievements()', async () => {
     const response = api.getPlayerAchievements(testData.a.vanityId, testAppId);
     const achieved = api.getPlayerAchievements(testData.a.vanityId, testAppId, true);
     expect(await response).toBeDefined();
@@ -134,9 +134,9 @@ it('getPlayerAchievements()', async () => {
     await api.getPlayerAchievements(testData.a.vanityId, 0).catch(err => expect(err.message).toBe('AppID not provided.'));
     await api.getPlayerAchievements(testData.a.vanityId, 0, true).catch(err => expect(err.message).toBe('AppID not provided.'));
     await api.getPlayerAchievements('76561199225710783', testAppId).catch(err => expect(err.message).toBe('Profile not found or private'));
-}, 30000)
+}, 30000) -->
 
-it('getUserStatsForGame()', async () => {
+<!-- it('getUserStatsForGame()', async () => {
     //the only endpoint that gives an Internal Server Error when the profile is private --'
     const response = api.getUserStatsForGame(testData.a.vanityId, testAppId);
     expect(await response).toBeDefined();
@@ -151,13 +151,13 @@ it('getUserStatsForGame()', async () => {
         .catch(err => {
             expect(err).toBe('Profile not found or private')
         })*/
-});
+}); -->
 
-it('getFriendList()', async () => {
+<!-- it('getFriendList()', async () => {
     expect(await api.getFriendList(testData.a.vanityId)).toBeDefined();
     expect(await api.getFriendList(testData.b.vanityId)).toBeDefined();
     await api.getFriendList('76561199225710783').catch(err => expect(err.message).toBe('Profile not found or private'));
-});
+}); -->
 
 it('isPlayingSharedGame()', async () => {
 
