@@ -143,14 +143,14 @@ it('getPlayerBans()', async () => {
 
     await api.getUserStatsForGame(testData.a.vanityId, null).catch(err => expect(err.message).toBe('AppID not provided.'));
     await api.getUserStatsForGame('76561199225710783', testAppId).catch(err => expect(err.message).toBe('Profile not found or private'));
-    /*api
+    api
         .getUserStatsForGame(testData.a.vanityId, testAppId)
         .then(response => {
             expect(response).toBeDefined()
         })
         .catch(err => {
             expect(err).toBe('Profile not found or private')
-        })*/
+        })
 }); 
 
  it('getFriendList()', async () => {
