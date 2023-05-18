@@ -30,6 +30,7 @@ export class Steam {
      * @param vanity
      */
     async resolveId(vanity: string): Promise<string> {
+        vanity = String(vanity);
         return new Promise(async (resolve, reject) => {
             if (!vanity) {
                 reject(new TypeError('ID not provided.'));
