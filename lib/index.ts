@@ -29,13 +29,12 @@ export class Steam {
      * Transforms a vanity SteamId into a Steam64Id
      * @param vanity
      */
-    async resolveId(vanity: string): Promise<string> {
-        vanity = String(vanity);
+    async resolveId(vanity: string | number): Promise<string> {
         return new Promise(async (resolve, reject) => {
             if (!vanity) {
                 reject(new TypeError('ID not provided.'));
             }
-            if (('' + vanity).match(/^7656119[0-9]{10}$/i)) {
+            if (String(vanity).match(/^7656119[0-9]{10}$/i)) {
                 resolve(vanity);
             } else {
                 const {response} = await this.request(
