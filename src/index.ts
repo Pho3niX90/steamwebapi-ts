@@ -98,7 +98,7 @@ export class Steam {
                 return reject(new Error('ID not provided.'));
             }
 
-            if (vanity.match(/^7656119[0-9]{10}$/i)) {
+            if (String(vanity).match(/^7656119[0-9]{10}$/i)) {
                 return resolve(vanity);
             }
 
