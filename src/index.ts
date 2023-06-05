@@ -12,8 +12,6 @@ import dayjs from 'dayjs';
 
 const SteamIDLib = require('steamid');
 
-//import SteamID from 'steamid';
-
 const fetch = require('node-fetch');
 const appendQuery = require('append-query');
 const API_URL = 'http://api.steampowered.com/';
@@ -23,6 +21,8 @@ let rateLimitedTimestamp = new Date();
 
 let requestCount = 0;
 let requestCountLastReset = new Date();
+
+let _retryIn = 60;
 
 export class Steam {
     token;
@@ -35,9 +35,20 @@ export class Steam {
         }
     }
 
-    get isRateLimited(): {limited: boolean, minsSince: number, minsLeft: number} {
+    /***
+     * Defaults to 60mins
+     * @param retryIn in minutes
+     */
+    set retryIn(retryIn: number) {
+        _retryIn = retryIn;
+    }
+    get retryIn() {
+        return _retryIn;
+    }
+
+    get isRateLimited(): { limited: boolean, minsSince: number, minsLeft: number } {
         let minsSince = dayjs().diff(rateLimitedTimestamp, 'minute');
-        return {limited: isRateLimited, minsSince, minsLeft: 60 - minsSince};
+        return {limited: isRateLimited, minsSince, minsLeft: this.retryIn - minsSince};
     }
 
     /***
@@ -50,7 +61,7 @@ export class Steam {
     request(endpoint): Promise<any> {
         const limited = this.isRateLimited;
         if (limited.limited) {
-            if (limited.minsSince < 60) {
+            if (limited.minsSince < this.retryIn) {
                 console.log(`Steam rate limited. Won't send request. Retrying in ${limited.minsLeft} mins. Requests since ${requestCountLastReset.toTimeString()} is ${requestCount}`)
                 return Promise.reject(new Error(`Rate limited. Retrying in ${limited.minsLeft} mins`));
             }
@@ -78,7 +89,7 @@ export class Steam {
                         case 429:
                             isRateLimited = true;
                             rateLimitedTimestamp = new Date();
-                            reject(new Error(`Too many requests. Retrying in 60mins`))
+                            reject(new Error(`Too many requests. Retrying in ${this.retryIn}mins`))
                             break;
                         default:
                             return reject(new Error(`Steam returned ${statusCode} response code`))
