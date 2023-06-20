@@ -23,7 +23,7 @@ let requestCount = 0;
 let requestCountLastReset = new Date();
 
 let _retryIn = 60;
-let _timeout = 2500;
+let _timeout = 5000;
 
 AbortSignal.timeout ??= function timeout(ms) {
     const ctrl = new AbortController()
@@ -37,7 +37,7 @@ export class Steam {
     /***
      *
      * @param token your api key from Steam Web API
-     * @param timeout timeout in milliseconds, defaults to 2500
+     * @param timeout timeout in milliseconds, defaults to 5000
      */
     constructor(token, timeout = 2500) {
         _timeout = timeout;
