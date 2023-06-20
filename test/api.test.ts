@@ -7,7 +7,7 @@ if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
 }
 
-const api = new Steam(process.env.STEAM_API_KEY, 10000);
+const api = new Steam(process.env.STEAM_API_KEY, 30000);
 
 const testData = {
     a: {vanityId: 'Pho3niX90', steamId: 'STEAM_0:1:23584097', steamId3: '[U:1:47168195]', steamId64: '76561198007433923', name: 'Pho3niX90'},
