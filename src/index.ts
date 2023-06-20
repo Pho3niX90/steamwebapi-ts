@@ -25,12 +25,6 @@ let requestCountLastReset = new Date();
 let _retryIn = 60;
 let _timeout = 5000;
 
-AbortSignal.timeout ??= function timeout(ms) {
-    const ctrl = new AbortController()
-    setTimeout(() => ctrl.abort(), ms)
-    return ctrl.signal
-}
-
 export class Steam {
     token;
 
