@@ -9,10 +9,10 @@ import {SteamAchievement} from './types/SteamAchievement';
 import {SteamFriend} from './types/SteamFriend';
 import SteamID from 'steamid';
 import dayjs from 'dayjs';
+import fetch from 'node-fetch';
 
 const SteamIDLib = require('steamid');
 
-const fetch = require('node-fetch');
 const appendQuery = require('append-query');
 const API_URL = 'http://api.steampowered.com/';
 
@@ -23,11 +23,18 @@ let requestCount = 0;
 let requestCountLastReset = new Date();
 
 let _retryIn = 60;
+let _timeout = 2500;
 
 export class Steam {
     token;
 
-    constructor(token) {
+    /***
+     *
+     * @param token your api key from Steam Web API
+     * @param timeout timeout in milliseconds, defaults to 2500
+     */
+    constructor(token, timeout = 2500) {
+        _timeout = timeout;
         if (!token) {
             throw new Error('No token found! Supply it as argument.')
         } else {
@@ -42,6 +49,7 @@ export class Steam {
     set retryIn(retryIn: number) {
         _retryIn = retryIn;
     }
+
     get retryIn() {
         return _retryIn;
     }
@@ -78,24 +86,28 @@ export class Steam {
         requestCount++;
 
         return new Promise((resolve, reject) => {
-            fetch(appendQuery(API_URL + endpoint, {key: this.token}))
-                .then(res => {
-                    const statusCode = res.status;
-                    switch (statusCode) {
-                        case 200:
-                            isRateLimited = false;
-                            resolve(res.json());
-                            break;
-                        case 429:
-                            isRateLimited = true;
-                            rateLimitedTimestamp = new Date();
-                            reject(new Error(`Too many requests. Retrying in ${this.retryIn}mins`))
-                            break;
-                        default:
-                            return reject(new Error(`Steam returned ${statusCode} response code`))
-                    }
-                })
-                .catch(err => reject(err))
+            Promise.race([
+                fetch(appendQuery(API_URL + endpoint, {key: this.token,}))
+                    .then(res => {
+                        const statusCode = res.status;
+                        switch (statusCode) {
+                            case 200:
+                                isRateLimited = false;
+                                resolve(res.json());
+                                break;
+                            case 429:
+                                isRateLimited = true;
+                                rateLimitedTimestamp = new Date();
+                                reject(new Error(`Too many requests. Retrying in ${this.retryIn}mins`))
+                                break;
+                            default:
+                                return reject(new Error(`Steam returned ${statusCode} response code`))
+                        }
+                    })
+                    .catch(err => reject(err)),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('timeout')), _timeout)
+                )]);
         })
     }
 
@@ -109,7 +121,7 @@ export class Steam {
                 return reject(new Error('ID not provided.'));
             }
 
-            if (String(vanity).match(/^7656119[0-9]{10}$/i)) {
+            if (String(vanity).match(/^7656[0-9]{13}$/i)) {
                 return resolve(vanity);
             }
 
