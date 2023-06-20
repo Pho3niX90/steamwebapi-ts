@@ -33,8 +33,8 @@ export class Steam {
      * @param token your api key from Steam Web API
      * @param timeout timeout in milliseconds, defaults to 5000
      */
-    constructor(token, timeout = 2500) {
-        _timeout = timeout;
+    constructor(token, timeout?) {
+        _timeout = timeout ?? 2500;
         if (!token) {
             throw new Error('No token found! Supply it as argument.')
         } else {
