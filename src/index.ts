@@ -34,7 +34,7 @@ export class Steam {
      * @param timeout timeout in milliseconds, defaults to 5000
      */
     constructor(token, timeout?) {
-        _timeout = timeout ?? 2500;
+        _timeout = timeout ?? 5000;
         if (!token) {
             throw new Error('No token found! Supply it as argument.')
         } else {
