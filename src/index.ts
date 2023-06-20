@@ -25,6 +25,12 @@ let requestCountLastReset = new Date();
 let _retryIn = 60;
 let _timeout = 2500;
 
+AbortSignal.timeout ??= function timeout(ms) {
+    const ctrl = new AbortController()
+    setTimeout(() => ctrl.abort(), ms)
+    return ctrl.signal
+}
+
 export class Steam {
     token;
 
@@ -86,28 +92,24 @@ export class Steam {
         requestCount++;
 
         return new Promise((resolve, reject) => {
-            Promise.race([
-                fetch(appendQuery(API_URL + endpoint, {key: this.token,}))
-                    .then(res => {
-                        const statusCode = res.status;
-                        switch (statusCode) {
-                            case 200:
-                                isRateLimited = false;
-                                resolve(res.json());
-                                break;
-                            case 429:
-                                isRateLimited = true;
-                                rateLimitedTimestamp = new Date();
-                                reject(new Error(`Too many requests. Retrying in ${this.retryIn}mins`))
-                                break;
-                            default:
-                                return reject(new Error(`Steam returned ${statusCode} response code`))
-                        }
-                    })
-                    .catch(err => reject(err)),
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('timeout')), _timeout)
-                )]);
+            fetch(appendQuery(API_URL + endpoint, {key: this.token}), {signal: AbortSignal.timeout(_timeout)})
+                .then(res => {
+                    const statusCode = res.status;
+                    switch (statusCode) {
+                        case 200:
+                            isRateLimited = false;
+                            resolve(res.json());
+                            break;
+                        case 429:
+                            isRateLimited = true;
+                            rateLimitedTimestamp = new Date();
+                            reject(new Error(`Too many requests. Retrying in ${this.retryIn}mins`))
+                            break;
+                        default:
+                            return reject(new Error(`Steam returned ${statusCode} response code`))
+                    }
+                })
+                .catch(err => reject(err));
         })
     }
 
