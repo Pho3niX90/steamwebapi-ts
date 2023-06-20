@@ -407,7 +407,7 @@ export class Steam {
             }
             const app = await fetch(
                 'http://store.steampowered.com/api/appdetails?appids=' + appid
-            ).then(res => res.json()).catch(reject)
+                , {signal: AbortSignal.timeout(_timeout)}).then(res => res.json()).catch(reject)
             if (!app[appid].success) {
                 return reject(new Error('App not found.'))
             }
