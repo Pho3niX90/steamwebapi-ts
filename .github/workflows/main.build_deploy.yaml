@@ -15,10 +15,10 @@ jobs:
         with:
           token: ${{ secrets.GIT_TOKEN_AVB }}
 
-      - name: Setup Node 16.x
+      - name: Setup Node 20.3
         uses: actions/setup-node@v1
         with:
-          node-version: '16.x'
+          node-version: 20.3
 
       - name: Install modules
         run: npm ci
