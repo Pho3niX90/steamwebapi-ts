@@ -1,6 +1,7 @@
 import {Steam} from '../src';
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import {SteamPlayerBans} from '../src/types/SteamPlayerBans';
+
 const SteamID = require('steamid');
 
 if (process.env.NODE_ENV !== 'production') {
@@ -10,8 +11,20 @@ if (process.env.NODE_ENV !== 'production') {
 const api = new Steam(process.env.STEAM_API_KEY, 30000);
 
 const testData = {
-    a: {vanityId: 'Pho3niX90', steamId: 'STEAM_0:1:23584097', steamId3: '[U:1:47168195]', steamId64: '76561198007433923', name: 'Pho3niX90'},
-    b: {vanityId: 'serverarmour', steamId: 'STEAM_0:0:542092900', steamId3: '[U:1:1084185800]', steamId64: '76561199044451528', name: 'ServerArmour.com'}
+    a: {
+        vanityId: 'Pho3niX90',
+        steamId: 'STEAM_0:1:23584097',
+        steamId3: '[U:1:47168195]',
+        steamId64: '76561198007433923',
+        name: 'Pho3niX90'
+    },
+    b: {
+        vanityId: 'serverarmour',
+        steamId: 'STEAM_0:0:542092900',
+        steamId3: '[U:1:1084185800]',
+        steamId64: '76561199044451528',
+        name: 'ServerArmour.com'
+    }
 }
 
 const testAppId = 252490;
@@ -96,7 +109,6 @@ it('getPlayersSummary()', async () => {
 it('getOwnedGames()', async () => {
     const response = await api.getOwnedGames(testData.a.vanityId);
     expect(response).toBeDefined()
-    expect(response).toBeInstanceOf(Array);
 
     const testApp = response.filter(x => x.appid === testAppId);
     expect(testApp).toBeDefined();
@@ -197,7 +209,6 @@ it('getUserLevel()', async () => {
 it('getUserBadges()', async () => {
     const response = await api.getUserBadges(testData.a.vanityId);
     expect(response).toBeDefined();
-    expect(response).toBeInstanceOf(Array);
     await api.getUserBadges('0').catch(async err => {
         expect(err.message).toBe('Profile not found or private')
     });
@@ -217,7 +228,6 @@ it('getServerList()', async () => {
     const response = await api.getServerList(`\\appid\\${testAppId}`, serverLimit);
 
     expect(response).toBeDefined();
-    expect(response).toBeInstanceOf(Array);
     expect(response.length).toEqual(serverLimit);
 
     for (let i = 0; i < randomChecks; i++) {

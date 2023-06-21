@@ -9,7 +9,6 @@ import {SteamAchievement} from './types/SteamAchievement';
 import {SteamFriend} from './types/SteamFriend';
 import SteamID from 'steamid';
 import dayjs from 'dayjs';
-import * as fetch from 'node-fetch';
 
 const SteamIDLib = require('steamid');
 
