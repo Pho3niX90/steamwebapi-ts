@@ -5,7 +5,7 @@ export default [
         input: './src/index.ts',
         output: {
             file: './lib/index.esm.js',
-            format: 'esm',
+            format: 'cjs',
         },
         plugins: [typescript()],
     },
