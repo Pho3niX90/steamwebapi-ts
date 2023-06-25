@@ -4,7 +4,8 @@
     "target": "es5",
     "module": "esnext",
     "lib": [
-      "es2015"
+      "es2020",
+      "DOM"
     ],
     "sourceMap": true,
     "strict": true,
