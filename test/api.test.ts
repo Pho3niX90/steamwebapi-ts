@@ -7,7 +7,6 @@ const SteamID = require('steamid');
 if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
 }
-jest.setTimeout(30000);
 const api = new Steam(process.env.STEAM_API_KEY, 30000);
 
 const testData = {
@@ -187,6 +186,7 @@ it('getSchemaForGame()', async () => {
 });
 
 it('getAppList()', async () => {
+    jest.setTimeout(30000);
     const response = await api.getAppList();
     expect(response).toBeDefined()
 }, 30000);
