@@ -34,7 +34,8 @@ export class Steam {
      * @param newApiUrl custom api url, defaults to http://api.steampowered.com/
      */
     constructor(token, timeout?, newApiUrl?) {
-        _timeout = timeout ?? 5000;
+        if (timeout)
+            _timeout = timeout;
         if (newApiUrl)
             API_URL = newApiUrl;
         if (!token) {
