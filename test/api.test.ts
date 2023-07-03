@@ -37,11 +37,6 @@ it('constructor test', async () => {
     expect(() => new Steam()).toThrow(Error);
 });
 
-it('private summary', async () => {
-    const response = await api.getPlayerSummary('76561198086311667');
-    console.log(response)
-})
-
 it('should resolve vanity', async () => {
     const vanityResponse = api.resolveId(testData.a.vanityId);
     const steamIdResponse = api.resolveId(testData.a.steamId);
