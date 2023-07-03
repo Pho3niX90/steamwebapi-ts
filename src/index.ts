@@ -13,7 +13,7 @@ import dayjs from 'dayjs';
 const SteamIDLib = require('steamid');
 
 const appendQuery = require('append-query');
-const API_URL = 'http://api.steampowered.com/';
+let API_URL = 'http://api.steampowered.com/';
 
 let isRateLimited = false;
 let rateLimitedTimestamp = new Date();
@@ -31,9 +31,11 @@ export class Steam {
      *
      * @param token your api key from Steam Web API
      * @param timeout timeout in milliseconds, defaults to 5000
+     * @param apiUrl custom api url, defaults to http://api.steampowered.com/
      */
-    constructor(token, timeout?) {
+    constructor(token, timeout?, apiUrl?) {
         _timeout = timeout ?? 5000;
+        this.apiUrl = apiUrl;
         if (!token) {
             throw new Error('No token found! Supply it as argument.')
         } else {
@@ -51,6 +53,14 @@ export class Steam {
 
     get retryIn() {
         return _retryIn;
+    }
+
+    get apiUrl() {
+        return API_URL;
+    }
+
+    set apiUrl(url: string) {
+        API_URL = url;
     }
 
     get isRateLimited(): { limited: boolean, minsSince: number, minsLeft: number } {
@@ -85,7 +95,8 @@ export class Steam {
         requestCount++;
 
         return new Promise((resolve, reject) => {
-            fetch(appendQuery(API_URL + endpoint, {key: this.token}), {signal: AbortSignal.timeout(_timeout)})
+            fetch(appendQuery(this.apiUrl + endpoint, {key: this.token}),
+                {signal: AbortSignal.timeout(_timeout)})
                 .then(res => {
                     const statusCode = res.status;
                     switch (statusCode) {

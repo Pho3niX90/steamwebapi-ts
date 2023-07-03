@@ -23,6 +23,9 @@ const testData = {
         steamId3: '[U:1:1084185800]',
         steamId64: '76561199044451528',
         name: 'ServerArmour.com'
+    },
+    c: {
+        steamId: '76561197972187320'
     }
 }
 
@@ -32,6 +35,16 @@ it('constructor test', async () => {
     expect(api).toBeDefined();
     // @ts-ignore
     expect(() => new Steam()).toThrow(Error);
+});
+
+it('test broken steamId summary', async () => {
+    const response = await api.getPlayerSummary(testData.c.steamId);
+    console.log(response)
+});
+
+it('private summary', async () => {
+    const response = await api.getPlayerSummary('76561198086311667');
+    console.log(response)
 })
 
 it('should resolve vanity', async () => {
