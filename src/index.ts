@@ -31,11 +31,12 @@ export class Steam {
      *
      * @param token your api key from Steam Web API
      * @param timeout timeout in milliseconds, defaults to 5000
-     * @param apiUrl custom api url, defaults to http://api.steampowered.com/
+     * @param newApiUrl custom api url, defaults to http://api.steampowered.com/
      */
-    constructor(token, timeout?, apiUrl?) {
+    constructor(token, timeout?, newApiUrl?) {
         _timeout = timeout ?? 5000;
-        this.apiUrl = apiUrl;
+        if (newApiUrl)
+            API_URL = newApiUrl;
         if (!token) {
             throw new Error('No token found! Supply it as argument.')
         } else {
@@ -53,14 +54,6 @@ export class Steam {
 
     get retryIn() {
         return _retryIn;
-    }
-
-    get apiUrl() {
-        return API_URL;
-    }
-
-    set apiUrl(url: string) {
-        API_URL = url;
     }
 
     get isRateLimited(): { limited: boolean, minsSince: number, minsLeft: number } {
@@ -93,9 +86,8 @@ export class Steam {
         }
 
         requestCount++;
-
         return new Promise((resolve, reject) => {
-            fetch(appendQuery(this.apiUrl + endpoint, {key: this.token}),
+            fetch(appendQuery(API_URL + endpoint, {key: this.token}),
                 {signal: AbortSignal.timeout(_timeout)})
                 .then(res => {
                     const statusCode = res.status;
