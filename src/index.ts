@@ -25,7 +25,7 @@ let _retryIn = 60;
 let _timeout = 5000;
 
 export class Steam {
-    token;
+    private readonly token;
 
     /***
      *
