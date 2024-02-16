@@ -11,21 +11,17 @@ import SteamID from 'steamid';
 import dayjs from 'dayjs';
 
 const SteamIDLib = require('steamid');
-
 const appendQuery = require('append-query');
-let API_URL = 'http://api.steampowered.com/';
-
-let isRateLimited = false;
-let rateLimitedTimestamp = new Date();
-
-let requestCount = 0;
-let requestCountLastReset = new Date();
-
-let _retryIn = 60;
-let _timeout = 5000;
 
 export class Steam {
     private readonly token;
+    API_URL = 'http://api.steampowered.com/';
+    _isRateLimited = false;
+    _rateLimitedTimestamp = new Date();
+    _requestCount = 0;
+    _requestCountLastReset = new Date();
+    _retryIn = 60;
+    _timeout = 5000;
 
     /***
      *
@@ -35,9 +31,9 @@ export class Steam {
      */
     constructor(token, timeout?, newApiUrl?) {
         if (timeout)
-            _timeout = timeout;
+            this._timeout = timeout;
         if (newApiUrl)
-            API_URL = newApiUrl;
+            this.API_URL = newApiUrl;
         if (!token) {
             throw new Error('No token found! Supply it as argument.')
         } else {
@@ -50,30 +46,30 @@ export class Steam {
      * @param retryIn in minutes
      */
     set retryIn(retryIn: number) {
-        _retryIn = retryIn;
+        this._retryIn = retryIn;
     }
 
     get retryIn() {
-        return _retryIn;
+        return this._retryIn;
     }
 
     get isRateLimited(): { limited: boolean, minsSince: number, minsLeft: number } {
-        let minsSince = dayjs().diff(rateLimitedTimestamp, 'minute');
-        return {limited: isRateLimited, minsSince, minsLeft: this.retryIn - minsSince};
+        let minsSince = dayjs().diff(this._rateLimitedTimestamp, 'minute');
+        return {limited: this._isRateLimited, minsSince, minsLeft: this.retryIn - minsSince};
     }
 
     /***
      * Resets every 24hrs
      */
     get requestCount() {
-        return {count: requestCount, lastReset: requestCountLastReset.getTime()}
+        return {count: this._requestCount, lastReset: this._requestCountLastReset.getTime()}
     }
 
     request(endpoint): Promise<any> {
         const limited = this.isRateLimited;
         if (limited.limited) {
             if (limited.minsSince < this.retryIn) {
-                console.log(`Steam rate limited. Won't send request. Retrying in ${limited.minsLeft} mins. Requests since ${requestCountLastReset.toTimeString()} is ${requestCount}`)
+                console.log(`Steam rate limited. Won't send request. Retrying in ${limited.minsLeft} mins. Requests since ${this._requestCountLastReset.toTimeString()} is ${this._requestCount}`)
                 return Promise.reject(new Error(`Rate limited. Retrying in ${limited.minsLeft} mins`));
             }
         }
@@ -81,25 +77,25 @@ export class Steam {
         /**
          * Reset counter every 24hrs
          */
-        if (new Date().getTime() > (requestCountLastReset.getTime() + (24 * 60 * 60 * 1000))) {
-            requestCount = 0;
-            requestCountLastReset = new Date();
+        if (new Date().getTime() > (this._requestCountLastReset.getTime() + (24 * 60 * 60 * 1000))) {
+            this._requestCount = 0;
+            this._requestCountLastReset = new Date();
         }
 
-        requestCount++;
+        this._requestCount++;
         return new Promise((resolve, reject) => {
-            fetch(appendQuery(API_URL + endpoint, {key: this.token}),
-                {signal: AbortSignal.timeout(_timeout)})
+            fetch(appendQuery(this.API_URL + endpoint, {key: this.token}),
+                {signal: AbortSignal.timeout(this._timeout)})
                 .then(res => {
                     const statusCode = res.status;
                     switch (statusCode) {
                         case 200:
-                            isRateLimited = false;
+                            this._isRateLimited = false;
                             resolve(res.json());
                             break;
                         case 429:
-                            isRateLimited = true;
-                            rateLimitedTimestamp = new Date();
+                            this._isRateLimited = true;
+                            this._rateLimitedTimestamp = new Date();
                             reject(new Error(`Too many requests. Retrying in ${this.retryIn}mins`))
                             break;
                         default:
@@ -404,7 +400,7 @@ export class Steam {
             }
             const app = await fetch(
                 'http://store.steampowered.com/api/appdetails?appids=' + appid
-                , {signal: AbortSignal.timeout(_timeout)}).then(res => res.json()).catch(reject)
+                , {signal: AbortSignal.timeout(this._timeout)}).then(res => res.json()).catch(reject)
             if (!app[appid].success) {
                 return reject(new Error('App not found.'))
             }
