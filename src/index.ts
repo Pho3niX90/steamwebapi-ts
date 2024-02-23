@@ -14,14 +14,14 @@ const SteamIDLib = require('steamid');
 const appendQuery = require('append-query');
 
 export class Steam {
-    private readonly token;
-    API_URL = 'http://api.steampowered.com/';
-    _isRateLimited = false;
-    _rateLimitedTimestamp = new Date();
-    _requestCount = 0;
-    _requestCountLastReset = new Date();
-    _retryIn = 60;
-    _timeout = 5000;
+    private readonly token: string;
+    API_URL: string = 'http://api.steampowered.com/';
+    _isRateLimited: boolean = false;
+    _rateLimitedTimestamp: Date = new Date();
+    _requestCount: number = 0;
+    _requestCountLastReset: Date = new Date();
+    _retryIn: number = 60;
+    _timeout: number = 5000;
 
     /***
      *
@@ -29,7 +29,7 @@ export class Steam {
      * @param timeout timeout in milliseconds, defaults to 5000
      * @param newApiUrl custom api url, defaults to http://api.steampowered.com/
      */
-    constructor(token, timeout?, newApiUrl?) {
+    constructor(token: string, timeout?: number, newApiUrl?: string) {
         if (timeout)
             this._timeout = timeout;
         if (newApiUrl)
@@ -65,13 +65,11 @@ export class Steam {
         return {count: this._requestCount, lastReset: this._requestCountLastReset.getTime()}
     }
 
-    request(endpoint): Promise<any> {
+    request(endpoint: string): Promise<any> {
         const limited = this.isRateLimited;
-        if (limited.limited) {
-            if (limited.minsSince < this.retryIn) {
-                console.log(`Steam rate limited. Won't send request. Retrying in ${limited.minsLeft} mins. Requests since ${this._requestCountLastReset.toTimeString()} is ${this._requestCount}`)
-                return Promise.reject(new Error(`Rate limited. Retrying in ${limited.minsLeft} mins`));
-            }
+        if (limited.limited && limited.minsSince < this.retryIn) {
+            console.log(`Steam rate limited. Won't send request. Retrying in ${limited.minsLeft} mins. Requests since ${this._requestCountLastReset.toTimeString()} is ${this._requestCount}`)
+            return Promise.reject(new Error(`Rate limited. Retrying in ${limited.minsLeft} mins`));
         }
 
         /**
@@ -84,9 +82,12 @@ export class Steam {
 
         this._requestCount++;
         return new Promise((resolve, reject) => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this._timeout);
             fetch(appendQuery(this.API_URL + endpoint, {key: this.token}),
-                {signal: AbortSignal.timeout(this._timeout)})
+                {signal: controller.signal})
                 .then(res => {
+                    clearTimeout(timeoutId);
                     const statusCode = res.status;
                     switch (statusCode) {
                         case 200:
@@ -102,7 +103,10 @@ export class Steam {
                             return reject(new Error(`Steam returned ${statusCode} response code`))
                     }
                 })
-                .catch(err => reject(err));
+                .catch(err => {
+                    clearTimeout(timeoutId);
+                    reject(err)
+                });
         })
     }
 
@@ -398,8 +402,7 @@ export class Steam {
             if (!appid) {
                 return reject(new Error('AppID not provided.'));
             }
-            const app = await fetch(
-                'http://store.steampowered.com/api/appdetails?appids=' + appid
+            const app = await fetch('http://store.steampowered.com/api/appdetails?appids=' + appid
                 , {signal: AbortSignal.timeout(this._timeout)}).then(res => res.json()).catch(reject)
             if (!app[appid].success) {
                 return reject(new Error('App not found.'))
