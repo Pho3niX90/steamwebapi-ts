@@ -9,6 +9,7 @@ import {SteamAchievement} from './types/SteamAchievement';
 import {SteamFriend} from './types/SteamFriend';
 import SteamID from 'steamid';
 import dayjs from 'dayjs';
+import axios from 'axios';
 
 const SteamIDLib = require('steamid');
 const appendQuery = require('append-query');
@@ -21,7 +22,7 @@ export class Steam {
     _requestCount: number = 0;
     _requestCountLastReset: Date = new Date();
     _retryIn: number = 60;
-    _timeout: number = 5000;
+    private readonly _timeout: number = 5000;
 
     /***
      *
@@ -82,17 +83,13 @@ export class Steam {
 
         this._requestCount++;
         return new Promise((resolve, reject) => {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), this._timeout);
-            fetch(appendQuery(this.API_URL + endpoint, {key: this.token}),
-                {signal: controller.signal})
+            axios.request({url: appendQuery(this.API_URL + endpoint, {key: this.token}), timeout: this._timeout})
                 .then(res => {
-                    clearTimeout(timeoutId);
                     const statusCode = res.status;
                     switch (statusCode) {
                         case 200:
                             this._isRateLimited = false;
-                            resolve(res.json());
+                            resolve(res.data);
                             break;
                         case 429:
                             this._isRateLimited = true;
@@ -102,11 +99,7 @@ export class Steam {
                         default:
                             return reject(new Error(`Steam returned ${statusCode} response code`))
                     }
-                })
-                .catch(err => {
-                    clearTimeout(timeoutId);
-                    reject(err)
-                });
+                }).catch(e => reject(e))
         })
     }
 
@@ -402,8 +395,10 @@ export class Steam {
             if (!appid) {
                 return reject(new Error('AppID not provided.'));
             }
-            const app = await fetch('http://store.steampowered.com/api/appdetails?appids=' + appid
-                , {signal: AbortSignal.timeout(this._timeout)}).then(res => res.json()).catch(reject)
+            const app = await axios.request({
+                url: 'http://store.steampowered.com/api/appdetails?appids=' + appid,
+                timeout: this._timeout
+            }).then(res => res.data).catch(reject)
             if (!app[appid].success) {
                 return reject(new Error('App not found.'))
             }

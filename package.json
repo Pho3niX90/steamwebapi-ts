@@ -30,6 +30,7 @@
     "@babel/preset-typescript": "^7.23.3",
     "@types/steamid": "^2.0.3",
     "append-query": "^2.1.1",
+    "axios": "^1.6.7",
     "dayjs": "^1.11.10",
     "dotenv": "^16.4.4",
     "steamid": "^2.0.0"
