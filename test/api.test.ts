@@ -25,7 +25,7 @@ const testData = {
         name: 'ServerArmour.com'
     },
     c: {
-        steamId: '76561197972187320'
+        steamId64: '76561197972187320'
     }
 }
 
@@ -137,6 +137,12 @@ it('getPlayerBans()', async () => {
         NumberOfGameBans: 0,
         EconomyBan: 'none'
     })
+})
+
+it('getPlayersBans()', async () => {
+    const response = await api.getPlayersBans([testData.a.steamId64, testData.b.steamId64, testData.c.steamId64]);
+    expect(response).toBeDefined()
+    expect(response.length).toEqual(3);
 })
 
 /* it('getPlayerAchievements()', async () => {

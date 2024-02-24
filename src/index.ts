@@ -288,6 +288,22 @@ export class Steam {
         });
     }
 
+    /***
+     * Accepts ONLY steam64Ids
+     * @param ids
+     */
+    async getPlayersBans(ids: string[]): Promise<SteamPlayerBans[]> {
+        return new Promise(async (resolve, reject) => {
+            const request = await this.request(
+                `ISteamUser/GetPlayerBans/v1?steamids=${ids.join(',')}`
+            ).catch(reject)
+            if (request instanceof Error || !request || !request?.players) {
+                return reject(new Error('STEAM_ERROR'));
+            }
+            resolve(request.players);
+        });
+    }
+
     async getPlayerAchievements(id: string, appid: number, onlyAchieved = false) {
         return new Promise(async (resolve, reject) => {
             id = await this.resolveId(id).catch(reject) || '';
