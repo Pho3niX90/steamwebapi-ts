@@ -10,6 +10,7 @@ import {SteamFriend} from './types/SteamFriend';
 import SteamID from 'steamid';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import Redis, {RedisOptions} from 'ioredis';
 
 const SteamIDLib = require('steamid');
 const appendQuery = require('append-query');
@@ -23,14 +24,18 @@ export class Steam {
     _requestCountLastReset: Date = new Date();
     _retryIn: number = 60;
     private readonly _timeout: number = 5000;
+    private readonly redis: Redis | undefined;
+    private readonly CACHE_TTL: number = 60;
 
     /***
      *
      * @param token your api key from Steam Web API
      * @param timeout timeout in milliseconds, defaults to 5000
      * @param newApiUrl custom api url, defaults to http://api.steampowered.com/
+     * @param redisOptions
+     * @param cacheTtl
      */
-    constructor(token: string, timeout?: number, newApiUrl?: string) {
+    constructor(token: string, timeout?: number, newApiUrl?: string, redisOptions?: RedisOptions, cacheTtl: number = 60) {
         if (timeout)
             this._timeout = timeout;
         if (newApiUrl)
@@ -39,6 +44,10 @@ export class Steam {
             throw new Error('No token found! Supply it as argument.')
         } else {
             this.token = token;
+        }
+        if(redisOptions) {
+            this.redis = new Redis(redisOptions);
+            this.CACHE_TTL = cacheTtl;
         }
     }
 
@@ -59,6 +68,10 @@ export class Steam {
         return {limited: this._isRateLimited, minsSince, minsLeft: this.retryIn - minsSince};
     }
 
+    private getCacheKey(url: string): string {
+        return `steam_cache:${url}`;
+    }
+
     /***
      * Resets every 24hrs
      */
@@ -66,41 +79,50 @@ export class Steam {
         return {count: this._requestCount, lastReset: this._requestCountLastReset.getTime()}
     }
 
-    request(endpoint: string): Promise<any> {
-        const limited = this.isRateLimited;
-        if (limited.limited && limited.minsSince < this.retryIn) {
-            console.log(`Steam rate limited. Won't send request. Retrying in ${limited.minsLeft} mins. Requests since ${this._requestCountLastReset.toTimeString()} is ${this._requestCount}`)
-            return Promise.reject(new Error(`Rate limited. Retrying in ${limited.minsLeft} mins`));
+    async request(endpoint: string, forceRefresh = false, cacheTtl?: number): Promise<any> {
+        const fullUrl = appendQuery(this.API_URL + endpoint, { key: this.token });
+        const cacheKey = this.getCacheKey(fullUrl);
+
+        if (this.redis && !forceRefresh) {
+            const cached = await this.redis.get(cacheKey);
+            if (cached) {
+                try {
+                    return JSON.parse(cached);
+                } catch {
+                    await this.redis.del(cacheKey); // Remove corrupt data
+                }
+            }
         }
 
-        /**
-         * Reset counter every 24hrs
-         */
-        if (new Date().getTime() > (this._requestCountLastReset.getTime() + (24 * 60 * 60 * 1000))) {
+        const limited = this.isRateLimited;
+        if (limited.limited && limited.minsSince < this.retryIn) {
+            throw new Error(`Rate limited. Retrying in ${limited.minsLeft} mins`);
+        }
+
+        if (Date.now() > this._requestCountLastReset.getTime() + 86400000) {
             this._requestCount = 0;
             this._requestCountLastReset = new Date();
         }
 
         this._requestCount++;
-        return new Promise((resolve, reject) => {
-            axios.request({url: appendQuery(this.API_URL + endpoint, {key: this.token}), timeout: this._timeout})
-                .then(res => {
-                    const statusCode = res.status;
-                    switch (statusCode) {
-                        case 200:
-                            this._isRateLimited = false;
-                            resolve(res.data);
-                            break;
-                        case 429:
-                            this._isRateLimited = true;
-                            this._rateLimitedTimestamp = new Date();
-                            reject(new Error(`Too many requests. Retrying in ${this.retryIn}mins`))
-                            break;
-                        default:
-                            return reject(new Error(`Steam returned ${statusCode} response code`))
-                    }
-                }).catch(e => reject(e))
-        })
+
+        try {
+            const res = await axios.get(fullUrl, { timeout: this._timeout });
+            if (res.status === 200) {
+                this._isRateLimited = false;
+                if (this.redis)
+                    await this.redis.set(cacheKey, JSON.stringify(res.data), 'EX', cacheTtl ?? this.CACHE_TTL);
+                return res.data;
+            } else if (res.status === 429) {
+                this._isRateLimited = true;
+                this._rateLimitedTimestamp = new Date();
+                throw new Error(`Too many requests. Retry in ${this.retryIn} mins`);
+            } else {
+                throw new Error(`Steam returned status ${res.status}`);
+            }
+        } catch (err) {
+            throw err;
+        }
     }
 
     /***
