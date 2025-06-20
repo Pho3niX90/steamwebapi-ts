@@ -10,7 +10,7 @@ import {SteamFriend} from './types/SteamFriend';
 import SteamID from 'steamid';
 import dayjs from 'dayjs';
 import axios from 'axios';
-import Redis, {RedisOptions} from 'ioredis';
+import Redis from 'ioredis';
 
 const SteamIDLib = require('steamid');
 const appendQuery = require('append-query');
@@ -35,7 +35,7 @@ export class Steam {
      * @param redisOptions
      * @param cacheTtl
      */
-    constructor(token: string, timeout?: number, newApiUrl?: string, redisOptions?: RedisOptions, cacheTtl: number = 60) {
+    constructor(token: string, timeout?: number, newApiUrl?: string, redis?: Redis, cacheTtl: number = 60) {
         if (timeout)
             this._timeout = timeout;
         if (newApiUrl)
@@ -45,8 +45,8 @@ export class Steam {
         } else {
             this.token = token;
         }
-        if(redisOptions) {
-            this.redis = new Redis(redisOptions);
+        if(redis) {
+            this.redis = redis;
             this.CACHE_TTL = cacheTtl;
         }
     }
