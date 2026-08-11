@@ -7,13 +7,28 @@ import {SteamPlayedGame} from './types/SteamPlayedGame';
 import {SteamPlayerBans} from './types/SteamPlayerBans';
 import {SteamAchievement} from './types/SteamAchievement';
 import {SteamFriend} from './types/SteamFriend';
-import SteamID from 'steamid';
-import dayjs from 'dayjs';
 import axios from 'axios';
 import Redis from 'ioredis';
 
-const SteamIDLib = require('steamid');
 const appendQuery = require('append-query');
+
+/** Steam2/Steam3 → Steam64. Returns null when the input is not a recognized ID format. */
+function tryParseToSteam64(id: string): string | null {
+    const steam64Base = BigInt('76561197960265728');
+
+    const steam2 = String(id).match(/^STEAM_[0-5]:([01]):(\d+)$/i);
+    if (steam2) {
+        const accountId = BigInt(steam2[2]) * BigInt(2) + BigInt(steam2[1]);
+        return (accountId + steam64Base).toString();
+    }
+
+    const steam3 = String(id).match(/^\[U:1:(\d+)\]$/i);
+    if (steam3) {
+        return (BigInt(steam3[1]) + steam64Base).toString();
+    }
+
+    return null;
+}
 
 export class Steam {
     private readonly token: string;
@@ -64,7 +79,7 @@ export class Steam {
     }
 
     get isRateLimited(): { limited: boolean, minsSince: number, minsLeft: number } {
-        let minsSince = dayjs().diff(this._rateLimitedTimestamp, 'minute');
+        const minsSince = Math.floor((Date.now() - this._rateLimitedTimestamp.getTime()) / 60000);
         return {limited: this._isRateLimited, minsSince, minsLeft: this.retryIn - minsSince};
     }
 
@@ -139,23 +154,17 @@ export class Steam {
                 return resolve(vanity);
             }
 
-            let idObject: SteamID | null = null;
-
-            try {
-                idObject = new SteamIDLib(vanity);
-            } catch (ignore) {
+            const steam64 = tryParseToSteam64(vanity);
+            if (steam64) {
+                return resolve(steam64);
             }
 
-            if (idObject && idObject.isValid()) {
-                return resolve(idObject.getSteamID64())
-            } else {
-                const request = await this.request('ISteamUser/ResolveVanityURL/v0001?vanityurl=' + vanity).catch(reject);
+            const request = await this.request('ISteamUser/ResolveVanityURL/v0001?vanityurl=' + vanity).catch(reject);
 
-                if (request instanceof Error || !request || !request.response || Object.keys(request.response).length === 0 || request.response.success === 42) {
-                    return reject(new Error('ID not found.'));
-                }
-                return resolve(request.response.steamid)
+            if (request instanceof Error || !request || !request.response || Object.keys(request.response).length === 0 || request.response.success === 42) {
+                return reject(new Error('ID not found.'));
             }
+            return resolve(request.response.steamid)
         });
     }
 

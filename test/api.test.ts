@@ -2,8 +2,6 @@ import {Steam} from '../src';
 import * as dotenv from 'dotenv';
 import {SteamPlayerBans} from '../src/types/SteamPlayerBans';
 
-const SteamID = require('steamid');
-
 if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
 }
@@ -254,11 +252,4 @@ it('getServerList()', async () => {
     await api.getServerList(`\\appid\\shouldNotExists`, serverLimit).catch(err => expect(err.message).toBe('Response from steam invalid.'));
 
 }, 30000);
-
-it('steamid library', async () => {
-    expect(new SteamID(testData.a.steamId).isValid()).toEqual(true);
-    expect(new SteamID(testData.a.steamId3).isValid()).toEqual(true);
-    expect(new SteamID(testData.a.steamId64).isValid()).toEqual(true);
-    expect(() => new SteamID(testData.a.vanityId)).toThrow();
-})
 });

@@ -200,7 +200,10 @@ describe('Steam unit tests', () => {
 
         it('converts steam2 and steam3', async () => {
             await expect(api.resolveId('STEAM_0:1:23584097')).resolves.toBe(STEAM64);
+            await expect(api.resolveId('STEAM_1:1:23584097')).resolves.toBe(STEAM64);
             await expect(api.resolveId('[U:1:47168195]')).resolves.toBe(STEAM64);
+            await expect(api.resolveId('STEAM_0:0:542092900')).resolves.toBe(STEAM64_B);
+            await expect(api.resolveId('[U:1:1084185800]')).resolves.toBe(STEAM64_B);
         });
 
         it('resolves vanity via api', async () => {

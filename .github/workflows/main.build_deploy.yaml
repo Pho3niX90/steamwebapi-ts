@@ -16,7 +16,9 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GIT_TOKEN_AVB }}
+          # Full history so the bump action can classify commits
+          fetch-depth: 0
 
       - name: Setup Node LTS
         uses: actions/setup-node@v7
@@ -82,9 +84,9 @@ jobs:
           namedLogo: jest
 
       - name: Automated Version Bump
-        uses: 'phips28/gh-action-bump-version@v11.0.7'
+        uses: phips28/gh-action-bump-version@v11.0.7
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN_AVB }}
         with:
           minor-wording: 'add,Adds,new'
           major-wording: 'MAJOR'
