@@ -235,15 +235,11 @@ export class Steam {
                 `ISteamUser/GetPlayerSummaries/v0002?steamids=${id}`
             ).catch(reject);
 
-            if (request instanceof Error || !request || !request?.response?.players?.length) {
+            if (request instanceof Error || !request?.response?.players?.length) {
                 return reject(new Error('STEAM_ERROR'))
             }
 
-            if (request?.response?.players && request?.response?.players?.length > 0)
-                resolve(request.response?.players.shift())
-            else {
-                reject(new Error('STEAM_ERROR'));
-            }
+            resolve(request.response.players.shift())
         });
     }
 
@@ -303,7 +299,7 @@ export class Steam {
             const request = await this.request(
                 `ISteamUser/GetPlayerBans/v1?steamids=${id}`
             ).catch(reject)
-            if (request instanceof Error || !request || !request?.players) {
+            if (request instanceof Error || !request?.players) {
                 return reject(new Error('STEAM_ERROR'));
             }
             resolve(request.players.shift());
@@ -319,7 +315,7 @@ export class Steam {
             const request = await this.request(
                 `ISteamUser/GetPlayerBans/v1?steamids=${ids.join(',')}`
             ).catch(reject)
-            if (request instanceof Error || !request || !request?.players) {
+            if (request instanceof Error || !request?.players) {
                 return reject(new Error('STEAM_ERROR'));
             }
             resolve(request.players);
@@ -340,7 +336,7 @@ export class Steam {
                     achievement => achievement.achieved === 1
                 ))
             }
-            if (!request || !request?.playerstats?.success)
+            if (!request?.playerstats?.success)
                 return reject(new Error('Profile not found or private'));
             resolve(request.playerstats.achievements);
         })
@@ -387,7 +383,7 @@ export class Steam {
             if (request instanceof Error || !request || !request.response || Object.keys(request.response).length === 0)
                 return resolve(-1);
 
-            resolve(request?.response?.player_level ?? -1);
+            resolve(request.response.player_level ?? -1);
         });
     }
 
@@ -405,7 +401,7 @@ export class Steam {
             const request = await this.request(
                 `IPlayerService/IsPlayingSharedGame/v0001?steamid=${id}&appid_playing=${appid}`
             ).catch(reject)
-            if (request instanceof Error || !request || !request?.response?.success)
+            if (request instanceof Error || !request?.response?.success)
                 return reject(new Error('Profile not found or private'))
             resolve(request.response.lender_steamid)
         })
@@ -416,10 +412,16 @@ export class Steam {
             if (!appid) {
                 return reject(new Error('AppID not provided.'))
             }
-            const {game} = await this.request(
+            const request = await this.request(
                 `ISteamUserStats/GetSchemaForGame/v2?appid=${appid}`
-            ).catch(reject)
-            return resolve(game);
+            ).catch(err => {
+                reject(err);
+                return null;
+            });
+            if (!request) {
+                return;
+            }
+            return resolve(request.game);
         })
     }
 
@@ -436,7 +438,13 @@ export class Steam {
             const app = await axios.request({
                 url: 'http://store.steampowered.com/api/appdetails?appids=' + appid,
                 timeout: this._timeout
-            }).then(res => res.data).catch(reject)
+            }).then(res => res.data).catch(err => {
+                reject(err);
+                return null;
+            });
+            if (!app) {
+                return;
+            }
             if (!app[appid].success) {
                 return reject(new Error('App not found.'))
             }

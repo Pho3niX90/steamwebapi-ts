@@ -7,8 +7,14 @@ const SteamID = require('steamid');
 if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
 }
-const api = new Steam(process.env.STEAM_API_KEY, 30000);
 
+const hasSteamKey = Boolean(process.env.STEAM_API_KEY);
+const describeLive = hasSteamKey ? describe : describe.skip;
+const api = hasSteamKey
+    ? new Steam(process.env.STEAM_API_KEY as string, 30000)
+    : (null as unknown as Steam);
+
+describeLive('Steam live API integration', () => {
 const testData = {
     a: {
         vanityId: 'Pho3niX90',
@@ -253,5 +259,6 @@ it('steamid library', async () => {
     expect(new SteamID(testData.a.steamId).isValid()).toEqual(true);
     expect(new SteamID(testData.a.steamId3).isValid()).toEqual(true);
     expect(new SteamID(testData.a.steamId64).isValid()).toEqual(true);
-    expect(() => new SteamID(testData.a.vanityId)).toThrowError();
+    expect(() => new SteamID(testData.a.vanityId)).toThrow();
 })
+});
