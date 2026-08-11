@@ -5,20 +5,24 @@ on:
     branches:
       - 'main'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Develop
     runs-on: ubuntu-latest
     steps:
       - name: Git checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GIT_TOKEN_AVB }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node LTS
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
+          cache: npm
 
       - name: Install modules
         run: npm ci
@@ -66,7 +70,7 @@ jobs:
 
       #- if: ${{ matrix.node-version == '14.x' }}
       - name: Create the Badge
-        uses: schneegans/dynamic-badges-action@v1.0.0
+        uses: schneegans/dynamic-badges-action@v1.9.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: 66e2656c1157700d2adcc8a9adef6929
@@ -77,9 +81,9 @@ jobs:
           namedLogo: jest
 
       - name: Automated Version Bump
-        uses: 'phips28/gh-action-bump-version@master'
+        uses: 'phips28/gh-action-bump-version@v11.0.7'
         env:
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN_AVB }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           minor-wording: 'add,Adds,new'
           major-wording: 'MAJOR'
@@ -92,6 +96,6 @@ jobs:
           npm run build --if-present
 
       - name: Publish
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v4
         with:
           token: ${{ secrets.NPM_TOKEN }}
